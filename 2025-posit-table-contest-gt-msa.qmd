@@ -1,0 +1,180 @@
+---
+title: "Visualizing Multiple Sequence Aligments with r-gt!"
+format: 
+  html:
+    toc: true
+    number-sections: true
+    code-tools: true
+    anchor-sections: true
+editor: 
+  render-on-save: true
+editor_options: 
+  chunk_output_type: console
+---
+
+# Setup
+
+## Libraries
+
+```{r}
+library(dplyr)
+library(here)
+library(tidyr)
+library(gt)
+library(tidysq)
+library(stringr)
+library(readr)
+palette_aa <- readr::read_csv('palette_amino_acids.csv')
+```
+
+## Data
+
+We take the  
+
+```{r}
+FILE_MSA <- 'example_AA_msa.fasta'
+msa <- tidysq::read_fasta(FILE_MSA)
+
+msa_tidied <- tibble(msa)
+
+
+tbl_data <- msa_tidied |>  
+  mutate(seq = as.character(sq) |> str_split('')) |> 
+  select(-sq) |> 
+  tidyr::unnest(seq) |> 
+  mutate(position = row_number(), .by = name) |> 
+  pivot_wider(
+    id_cols = 'name',
+    names_from = 'position',
+    values_from = 'seq'
+  )
+tbl_data
+```
+
+
+
+# gt
+
+```{r}
+tbl_data |> 
+  gt(rowname_col = 'name')
+```
+
+
+
+# color palette
+
+Let's implement Clustal color palette
+
+```{r}
+target_palette <- palette_aa |> select(symbol, Chemistry_AA) |> tibble::deframe()
+apply_color_to_aa <- function(letter) {
+  target_palette[letter]
+}
+
+tbl_data |> 
+  gt(rowname_col = 'name') |> 
+  data_color(fn = apply_color_to_aa)
+```
+
+
+```{r}
+data_color_msa <- function(
+    ...,
+    palette = c(
+      'Chemistry_AA', 
+      'Shapely_AA', 
+      'Zappo_AA', 
+      'Taylor_AA', 
+      'LETTER',  
+      'Hydrophobicity'
+    )
+) {
+  target_palette <- palette_aa[,c('symbol', palette[1])] |> tibble::deframe()
+  apply_color_to_aa <- function(letter) {
+    target_palette[letter]
+  }
+  return(gt::data_color(fn = apply_color_to_aa, ...))
+}
+
+tbl_data |> 
+  gt(rowname_col = 'name') |> 
+  data_color_msa()
+
+tbl_data |> 
+  gt(rowname_col = 'name') |> 
+  data_color_msa(palette = 'Shapely_AA')
+
+
+tbl_data |> 
+  gt(rowname_col = 'name') |> 
+  data_color_msa(palette = 'Zappo_AA')
+
+tbl_data |> 
+  gt(rowname_col = 'name') |> 
+  data_color_msa(palette = 'LETTER')
+```
+
+
+# theme
+
+- remove the borders
+
+```{r}
+
+tbl_data |> 
+  gt(rowname_col = 'name') |> 
+  data_color_msa()
+
+tbl_data |> 
+  gt(rowname_col = 'name') |> 
+  data_color_msa() |> 
+   tab_style(
+    style = list(
+      cell_borders(
+        sides = 'all',
+        weight = px(0)
+      )
+    ),
+    locations = list(
+      cells_body()
+    )
+  )
+
+```
+
+```{r}
+tbl_data2 <- msa_tidied |>  
+  mutate(seq = as.character(sq) |> str_split('')) |> 
+  select(-sq) |> 
+  tidyr::unnest(seq) |> 
+  mutate(position = row_number(), .by = name) |> 
+  pivot_wider(
+    id_cols = 'name',
+    names_from = 'position',
+    values_from = 'seq',
+    names_prefix = 'pos'
+  )
+
+tbl_data2 |> 
+  gt(rowname_col = 'name') |> 
+  gt::cols_label_with(fn = \(x)stringr::str_remove(x, 'pos')) |> 
+  data_color_msa()
+```
+
+
+# consensus sequence
+
+2 tab summaries: 
+
+Bar chart that shows the frequency of the most frequent AA by position
+
+Consensus sequence, shows most frequent
+
+
+# position
+
+Show position every 5 AA or something like that
+
+Leverage `scales` to generate `breaks` like ggplot2 does
+
