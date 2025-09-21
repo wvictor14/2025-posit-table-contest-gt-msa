@@ -129,7 +129,7 @@ tbl_data |>
 tbl_data |> 
   gt(rowname_col = 'name') |> 
   data_color_msa() |> 
-   tab_style(
+  tab_style(
     style = list(
       cell_borders(
         sides = 'all',
@@ -170,6 +170,135 @@ tbl_data2 |>
 Bar chart that shows the frequency of the most frequent AA by position
 
 Consensus sequence, shows most frequent
+
+```{r}
+gt_base <- tbl_data |> 
+  gt(rowname_col = 'name') |> 
+  data_color_msa() |> 
+  tab_style(
+    style = list(
+      cell_borders(
+        sides = 'all',
+        weight = px(0)
+      )
+    ),
+    locations = list(
+      cells_body()
+    )
+  )
+```
+
+```{r}
+frequency_tbl <- tbl_data[['1']] |> table() |>  sort(decreasing = TRUE)
+consensus_letter <- names(frequency_tbl)[1]
+consensus_freq <- (frequency_tbl/sum(frequency_tbl))[1]
+
+paste0(consensus_letter, ":", consensus_freq)
+```
+
+
+```{r}
+get_consensus <- function(x) {
+  frequency_tbl <- x |> table() |>  sort(decreasing = TRUE)
+  consensus_letter <- names(frequency_tbl)[1]
+  consensus_freq <- (frequency_tbl/sum(frequency_tbl))[1]
+  paste0(consensus_letter, ":", consensus_freq)
+}
+
+gt_base |> 
+  grand_summary_rows(
+    columns = everything(),
+    fns = list(
+      consensus ~ get_consensus(.)
+    )
+  )
+```
+
+
+```{r}
+library(htmltools)
+library(glue)
+
+
+create_html_vertical_bar <- function(bar_height = .5) {
+  .bar_height <- bar_height*100
+  div(
+    style="width:20px;height:50px;",
+    div(style=glue("height:{.bar_height}%;background:white")),
+    div(style=glue("height:{100-.bar_height}%;background:#4a6fa5"))
+  )
+}
+
+create_html_vertical_bar(0.5) |>  browsable()
+```
+
+```{r}
+
+#' returns a 1-length named character vector of the most frequent amino acid, where:
+#'  - the value is the frequency
+#'  - the name is amino acid
+#'  
+#' Does not handle ties (one of the ties will be returned)
+get_consensus <- function(x) {
+  
+  # drop gaps
+  frequency_tbl <- x |> table() |>  sort(decreasing = TRUE)
+  consensus_freq <- (frequency_tbl/sum(frequency_tbl))[1]
+  
+  return(consensus_freq)
+}
+tbl_data[['20']] |> get_consensus()
+
+#' This version sets the parent div to be 100% width and height
+#' @param bar_height a number between 0 and 1 that sets the height of the bar as a percentage of the total height of the container (the parent) div
+#' @param parent_div_height valid css unit for height of the parent div
+#' @param parent_div_width valid css unit for width of the parent div
+create_html_vertical_bar <- function(
+    bar_height = .5,
+    bar_color = '#4a6fa5',
+    parent_div_height = '50px', 
+    parent_div_width = '20px'
+) {
+  .bar_height <- bar_height*100
+  div(
+    style=glue("width:{parent_div_width};height:{parent_div_height};margin:0;padding:0;"),
+    div(style=glue("height:{100-.bar_height}%;background:transparent;margin:0;padding:0;")),
+    div(style=glue("height:{.bar_height}%;background:{bar_color};margin:0;padding:0;"))
+  )
+}
+
+
+#' gets the consensus of the vector x, and returns an html bar
+get_consensus_return_bar <- function(x) {
+  consensus_freq <- get_consensus(x)
+  create_html_vertical_bar(consensus_freq) 
+}
+tbl_data[['1']] |>  get_consensus_return_bar()  |> browsable()
+
+c('X', 'X')|>  get_consensus_return_bar()  
+```
+
+
+```{r}
+gt_base |> 
+  grand_summary_rows(
+    columns = everything(),
+    fns = list(
+      consensus_bar ~ get_consensus_return_bar(.) |> div(style = 'width:20px;height:50px;') |> as.character(),
+      consensus_seq ~ names(get_consensus(.)) |> 
+        
+        # change to double dash, otherwise fmt_markdown turns it into a list (ul)
+        stringr::str_replace('-', '--')
+    ),
+    fmt =   list(
+      bar ~  fmt_markdown(.)
+#      "consensus" ~ fmt_passthrough(.) # doesn't work
+    )
+  ) |> 
+  tab_options(grand_summary_row.padding.horizontal = px(1)) 
+```
+
+I would like to apply the color palette to the summary row. It seems that there is no option to apply `data_color` to `summary_rows` [#1981](https://github.com/rstudio/gt/discussions/1981). (I actually forgot that I opened this issue myself - guess that means this is a function I would use often in my workflows)
 
 
 # position
