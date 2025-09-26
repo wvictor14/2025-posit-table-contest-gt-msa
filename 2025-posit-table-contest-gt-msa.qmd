@@ -35,10 +35,12 @@ FILE_MSA <- 'msa.csv'
 msa <- readr::read_csv(FILE_MSA)
 
 # msa_tidied <- tibble(msa)
-tbl_data <- msa |>  
+msa_long <- msa |>  
   mutate(seq = as.character(seq) |> str_split('')) |> 
   tidyr::unnest(seq) |> 
-  mutate(position = row_number(), .by = name) |> 
+  mutate(position = row_number(), .by = name) 
+
+tbl_data <- msa_long |> 
   pivot_wider(
     id_cols = c(group, name, start),
     names_from = 'position',
@@ -62,18 +64,22 @@ Let's implement Clustal color palette
 ```{r}
 target_palette <- palette_aa |> select(symbol, Chemistry_AA) |> tibble::deframe()
 apply_color_to_aa <- function(letter) {
-  target_palette[letter]
+  out <- target_palette[letter]
+  out[is.na(out)] <- 'grey'
+  return(out)
 }
 
 tbl_data |> 
   gt(rowname_col = 'name') |> 
-  data_color(fn = apply_color_to_aa)
+  data_color(fn = apply_color_to_aa, columns = contains('pos')) |> 
+  cols_label_with(fn = ~str_remove(., 'pos_'))
 ```
 
 
 ```{r}
 data_color_msa <- function(
     ...,
+    columns = contains('pos'),
     palette = c(
       'Chemistry_AA', 
       'Shapely_AA', 
@@ -84,28 +90,29 @@ data_color_msa <- function(
     )
 ) {
   target_palette <- palette_aa[,c('symbol', palette[1])] |> tibble::deframe()
-  apply_color_to_aa <- function(letter) {
-    target_palette[letter]
-  }
-  return(gt::data_color(fn = apply_color_to_aa, ...))
+  return(gt::data_color(fn = apply_color_to_aa, columns = columns, ...))
 }
 
 tbl_data |> 
   gt(rowname_col = 'name') |> 
-  data_color_msa()
+  data_color_msa() |> 
+  cols_label_with(fn = ~str_remove(., 'pos_'))
 
 tbl_data |> 
   gt(rowname_col = 'name') |> 
-  data_color_msa(palette = 'Shapely_AA')
+  data_color_msa(palette = 'Shapely_AA')|> 
+  cols_label_with(fn = ~str_remove(., 'pos_'))
 
 
 tbl_data |> 
   gt(rowname_col = 'name') |> 
-  data_color_msa(palette = 'Zappo_AA')
+  data_color_msa(palette = 'Zappo_AA')|> 
+  cols_label_with(fn = ~str_remove(., 'pos_'))
 
 tbl_data |> 
   gt(rowname_col = 'name') |> 
-  data_color_msa(palette = 'LETTER')
+  data_color_msa(palette = 'LETTER')|> 
+  cols_label_with(fn = ~str_remove(., 'pos_'))
 ```
 
 
@@ -117,7 +124,8 @@ tbl_data |>
 
 tbl_data |> 
   gt(rowname_col = 'name') |> 
-  data_color_msa()
+  data_color_msa() |> 
+  cols_label_with(fn = ~str_remove(., 'pos_'))
 
 tbl_data |> 
   gt(rowname_col = 'name') |> 
@@ -132,29 +140,10 @@ tbl_data |>
     locations = list(
       cells_body()
     )
-  )
+  ) |> 
+  cols_label_with(fn = ~str_remove(., 'pos_'))
 
 ```
-
-```{r}
-tbl_data2 <- msa_tidied |>  
-  mutate(seq = as.character(sq) |> str_split('')) |> 
-  select(-sq) |> 
-  tidyr::unnest(seq) |> 
-  mutate(position = row_number(), .by = name) |> 
-  pivot_wider(
-    id_cols = 'name',
-    names_from = 'position',
-    values_from = 'seq',
-    names_prefix = 'pos'
-  )
-
-tbl_data2 |> 
-  gt(rowname_col = 'name') |> 
-  gt::cols_label_with(fn = \(x)stringr::str_remove(x, 'pos')) |> 
-  data_color_msa()
-```
-
 
 # consensus sequence
 
@@ -178,11 +167,11 @@ gt_base <- tbl_data |>
     locations = list(
       cells_body()
     )
-  )
+  ) 
 ```
 
 ```{r}
-frequency_tbl <- tbl_data[['1']] |> table() |>  sort(decreasing = TRUE)
+frequency_tbl <- tbl_data[['pos_1']] |> table() |>  sort(decreasing = TRUE)
 consensus_letter <- names(frequency_tbl)[1]
 consensus_freq <- (frequency_tbl/sum(frequency_tbl))[1]
 
@@ -200,11 +189,12 @@ get_consensus <- function(x) {
 
 gt_base |> 
   grand_summary_rows(
-    columns = everything(),
+    columns = contains('pos_') ,
     fns = list(
       consensus ~ get_consensus(.)
     )
-  )
+  ) |> 
+  cols_label_with(fn = ~str_remove(., 'pos_'))
 ```
 
 
@@ -275,7 +265,7 @@ c('X', 'X')|>  get_consensus_return_bar()
 ```{r}
 gt_base |> 
   grand_summary_rows(
-    columns = everything(),
+    columns = contains('pos'),
     fns = list(
       consensus_bar ~ get_consensus_return_bar(.) |> div(style = 'width:20px;height:50px;') |> as.character(),
       consensus_seq ~ names(get_consensus(.)) |> 
@@ -288,7 +278,8 @@ gt_base |>
 #      "consensus" ~ fmt_passthrough(.) # doesn't work
     )
   ) |> 
-  tab_options(grand_summary_row.padding.horizontal = px(1)) 
+  tab_options(grand_summary_row.padding.horizontal = px(1)) |> 
+  cols_label_with(fn = ~str_remove(., 'pos_'))
 ```
 
 I would like to apply the color palette to the summary row. It seems that there is no option to apply `data_color` to `summary_rows` [#1981](https://github.com/rstudio/gt/discussions/1981). (I actually forgot that I opened this issue myself - guess that means this is a function I would use often in my workflows)
