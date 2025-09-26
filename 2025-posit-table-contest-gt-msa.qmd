@@ -6,6 +6,7 @@ format:
     number-sections: true
     code-tools: true
     anchor-sections: true
+    html-table-processing: none
 editor: 
   render-on-save: true
 editor_options: 
