@@ -21,7 +21,6 @@ library(dplyr)
 library(here)
 library(tidyr)
 library(gt)
-library(tidysq)
 library(stringr)
 library(readr)
 palette_aa <- readr::read_csv('palette_amino_acids.csv')
@@ -32,26 +31,22 @@ palette_aa <- readr::read_csv('palette_amino_acids.csv')
 We take the  
 
 ```{r}
-FILE_MSA <- 'example_AA_msa.fasta'
-msa <- tidysq::read_fasta(FILE_MSA)
+FILE_MSA <- 'msa.csv'
+msa <- readr::read_csv(FILE_MSA)
 
-msa_tidied <- tibble(msa)
-
-
-tbl_data <- msa_tidied |>  
-  mutate(seq = as.character(sq) |> str_split('')) |> 
-  select(-sq) |> 
+# msa_tidied <- tibble(msa)
+tbl_data <- msa |>  
+  mutate(seq = as.character(seq) |> str_split('')) |> 
   tidyr::unnest(seq) |> 
   mutate(position = row_number(), .by = name) |> 
   pivot_wider(
-    id_cols = 'name',
+    id_cols = c(group, name, start),
     names_from = 'position',
-    values_from = 'seq'
+    values_from = 'seq',
+    names_prefix = 'pos_'
   )
 tbl_data
 ```
-
-
 
 # gt
 
@@ -59,8 +54,6 @@ tbl_data
 tbl_data |> 
   gt(rowname_col = 'name')
 ```
-
-
 
 # color palette
 
