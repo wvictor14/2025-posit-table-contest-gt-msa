@@ -156,7 +156,7 @@ Consensus sequence, shows most frequent
 
 ```{r}
 gt_base <- tbl_data |> 
-  gt(rowname_col = 'name') |> 
+  gt(rowname_col = c('name'), groupname_col = 'group') |> 
   data_color_msa() |> 
   tab_style(
     style = list(
@@ -241,7 +241,7 @@ create_html_vertical_bar <- function(
     bar_height = .5,
     bar_color = '#4a6fa5',
     parent_div_height = '50px', 
-    parent_div_width = '20px'
+    parent_div_width = '100%'
 ) {
   .bar_height <- bar_height*100
   div(
@@ -264,11 +264,11 @@ c('X', 'X')|>  get_consensus_return_bar()
 
 
 ```{r}
-gt_base |> 
+gt_with_consensus <- gt_base |> 
   grand_summary_rows(
     columns = contains('pos'),
     fns = list(
-      consensus_bar ~ get_consensus_return_bar(.) |> div(style = 'width:20px;height:50px;') |> as.character(),
+      consensus_bar ~ get_consensus_return_bar(.) |> div(style = 'width:100%;height:50px;') |> as.character(),
       consensus_seq ~ names(get_consensus(.)) |> 
         
         # change to double dash, otherwise fmt_markdown turns it into a list (ul)
@@ -276,11 +276,28 @@ gt_base |>
     ),
     fmt =   list(
       bar ~  fmt_markdown(.)
-#      "consensus" ~ fmt_passthrough(.) # doesn't work
+      #      "consensus" ~ fmt_passthrough(.) # doesn't work
     )
   ) |> 
-  tab_options(grand_summary_row.padding.horizontal = px(1)) |> 
-  cols_label_with(fn = ~str_remove(., 'pos_'))
+  tab_options(
+    row_group.as_column = TRUE,
+    grand_summary_row.padding.horizontal = px(1)
+  )  |>
+  tab_style(
+    style = cell_text(
+      size = "small",
+      align = 'center'
+    ),
+    locations = cells_body(columns = contains('pos_'))
+  ) |>
+  cols_width(
+    1 ~ px(50),
+    name ~ px(50),
+    start ~ px(50), 
+    everything() ~ px(15)
+  )
+gt_with_consensus |> 
+  cols_label_with(fn = ~str_remove(., 'pos_')) 
 ```
 
 I would like to apply the color palette to the summary row. It seems that there is no option to apply `data_color` to `summary_rows` [#1981](https://github.com/rstudio/gt/discussions/1981). (I actually forgot that I opened this issue myself - guess that means this is a function I would use often in my workflows)
@@ -290,5 +307,24 @@ I would like to apply the color palette to the summary row. It seems that there 
 
 Show position every 5 AA or something like that
 
-Leverage `scales` to generate `breaks` like ggplot2 does
+Here we can leverage `scales` to be smart about generating `breaks` like ggplot2 does
+
+```{r}
+generate_breaks <- function(tbl) {
+  seq_cols <- tbl |> select(contains('pos'))
+  n_col <- seq_cols  |> ncol()
+  
+  breaks <- scales::breaks_width(5, 0)(c(1, n_col))
+  
+  # handle case where breaks extend beyond data
+  breaks <- intersect(breaks, 1:n_col)
+  
+  col_breaks <- colnames(seq_cols[,breaks])
+  return(col_breaks)
+}
+
+breaks <- generate_breaks(tbl_data)
+gt_with_consensus |> 
+  cols_label_with(fn = ~ifelse(. %in% breaks, ., '') |>  str_remove('pos_')) 
+```
 
