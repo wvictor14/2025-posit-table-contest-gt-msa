@@ -50,3 +50,6 @@ renv/
 /.quarto/
 **/*.quarto_ipynb
 _site
+site_libs
+*.Rmarkdown
+*_files
