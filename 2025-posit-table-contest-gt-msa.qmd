@@ -92,6 +92,12 @@ data_color_msa <- function(
     )
 ) {
   target_palette <- palette_aa[,c('symbol', palette[1])] |> tibble::deframe()
+  apply_color_to_aa <- function(letter) {
+    out <- target_palette[letter]
+    out[is.na(out)] <- 'grey'
+    return(out)
+  }
+  
   return(gt::data_color(fn = apply_color_to_aa, columns = columns, ...))
 }
 
@@ -296,9 +302,9 @@ gt_with_consensus <- gt_base |>
   tab_options(
     row_group.as_column = TRUE,
     grand_summary_row.padding.horizontal = px(0),
-    table.font.size = 10,
+    table.font.size = 11,
   )  |>
-
+  
   # reduce the size of the alignment to fit in page
   tab_style(
     style = cell_text(
