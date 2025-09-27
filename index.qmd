@@ -2,8 +2,8 @@
 title: "Visualizing Multiple Sequence Aligments with r-gt!"
 format: 
   html:
-    toc: true
-    number-sections: true
+    code-fold: true
+    code-summary: "Show the code"
     code-tools: true
     anchor-sections: true
     html-table-processing: none
@@ -13,11 +13,264 @@ editor_options:
   chunk_output_type: console
 ---
 
-Multiple sequence alignment (MSA) is a technique to understand the similarity between different biological sequences ....
+Multiple sequence alignment (MSA) is a technique to understand the similarity and differences between biological sequences. This technique is useful for identifying conserved functional regions, and understanding evolutionary relationships.
 
-For the Posit Table contest I wanted to explore how MSAs can be visualized using the r package gt. This has been something I have wanted to do for a long time. So I'm excited for this opportunity.
+For the 2025 Posit Table contest I wanted to explore how MSAs can be visualized using the r package [gt](https://gt.rstudio.com/). This has been something I have wanted to do for a long time. So I'm excited for this opportunity.
 
-The data we are working with is from this Wang 2021, Figure 5, which visualizes an MSA of COVID spike proteins from various species. The visualization left an impression on me: there are similarities and differences between these sequences in a very important part of the protein! 
+The data we are working with is an msa from [@Wang2021], where they identified a potential universally conserved "weak spot" in Coronavirus spike proteins using cross-reactive monoclonal antibodies.  
+
+[Figure 5](https://www.nature.com/articles/s41467-021-21968-w/figures/5), shows an MSA of COVID spike proteins from several coronavirus species: SARS-CoV, SARS-CoV-2, MERS-COV, and HCoV-OC43 (the common cold). The visualization left an impression on me: there are similarities and differences between these sequences in a very important part of the protein! 
 
 
+# Setup {.hidden}
+
+Libraries
+
+```{r}
+#| message: false
+library(dplyr)
+library(here)
+library(tidyr)
+library(gt)
+library(stringr)
+library(readr)
+library(htmltools)
+library(glue)
+```
+
+Data
+
+```{r}
+# palette
+palette_aa <- readr::read_csv('palette_amino_acids.csv')
+
+# msa data
+FILE_MSA <- 'msa.csv'
+msa <- readr::read_csv(FILE_MSA)
+
+# long format
+msa_long <- msa |>  
+  mutate(seq = as.character(seq) |> str_split('')) |> 
+  tidyr::unnest(seq) |> 
+  mutate(position = row_number(), .by = name) 
+
+# table data
+tbl_data <- msa_long |> 
+  pivot_wider(
+    id_cols = c(group, name, start),
+    names_from = 'position',
+    values_from = 'seq',
+    names_prefix = 'pos_'
+  )
+```
+
+Custom functions
+
+## Palette
+
+```{r}
+data_color_msa <- function(
+    ...,
+    columns = contains('pos'),
+    palette = c(
+      'Chemistry_AA', 
+      'Shapely_AA', 
+      'Zappo_AA', 
+      'Taylor_AA', 
+      'LETTER',  
+      'Hydrophobicity'
+    )
+) {
+  target_palette <- palette_aa[,c('symbol', palette[1])] |> tibble::deframe()
+  apply_color_to_aa <- function(letter) {
+    out <- target_palette[letter]
+    out[is.na(out)] <- 'grey'
+    return(out)
+  }
+  
+  return(gt::data_color(fn = apply_color_to_aa, columns = columns, ...))
+}
+```
+
+## Consensus
+
+```{r}
+#' This version sets the parent div to be 100% width and height
+#' @param bar_height a number between 0 and 1 that sets the height of the bar as a percentage of the total height of the container (the parent) div
+#' @param parent_div_height valid css unit for height of the parent div
+#' @param parent_div_width valid css unit for width of the parent div
+create_html_vertical_bar <- function(
+    bar_height = .5,
+    bar_color = '#4a6fa5',
+    parent_div_height = '50px', 
+    parent_div_width = '100%'
+) {
+  .bar_height <- bar_height*100
+  div(
+    style=glue("width:{parent_div_width};height:{parent_div_height};margin:0;padding:0;"),
+    div(style=glue("height:{100-.bar_height}%;background:transparent;margin:0;padding:0;")),
+    div(style=glue("height:{.bar_height}%;background:{bar_color};margin:0;padding:0;"))
+  )
+}
+
+#' Get conensus frequency
+#' 
+#' returns a 1-length named character vector of the most frequent amino acid, where:
+#'  - the value is the frequency
+#'  - the name is amino acid
+#'  
+#' Does not handle ties (one of the ties will be returned)
+#' @param x a vector, ideally of interesting biological sequences
+get_consensus <- function(x) {
+  
+  # drop gaps
+  frequency_tbl <- x |> table() |>  sort(decreasing = TRUE)
+  consensus_freq <- (frequency_tbl/sum(frequency_tbl))[1]
+  
+  return(consensus_freq)
+}
+
+#' gets the consensus of the vector x, and returns an html bar
+get_consensus_return_bar <- function(x) {
+  consensus_freq <- get_consensus(x)
+  create_html_vertical_bar(consensus_freq) 
+}
+
+# usage:
+c('X', 'X', 'O')|>  get_consensus_return_bar()  |> browsable()
+c('X', 'O')|>  get_consensus_return_bar()  |> browsable()
+```
+
+breaks
+
+```{r}
+#' Treats the column names as an axis, and generates breaks using `scales::breaks_width`
+#' 
+#' @return a vector of column names at every `width` position 
+generate_breaks <- function(tbl, width = 5) {
+  seq_cols <- tbl |> select(contains('pos'))
+  n_col <- seq_cols  |> ncol()
+  
+  breaks <- scales::breaks_width(width, 0)(c(1, n_col))
+  
+  # handle case where breaks extend beyond data
+  breaks <- intersect(breaks, 1:n_col)
+  
+  col_breaks <- colnames(seq_cols[,breaks])
+  return(col_breaks)
+}
+
+breaks <- generate_breaks(tbl_data)
+```
+
+# 
+
+```{r}
+#| column: screen
+tbl_data |> 
+  gt(rowname_col = c('name'), groupname_col = 'group') |> 
+  data_color_msa() |> 
+  tab_style(
+    style = list(
+      cell_borders(
+        sides = 'all',
+        weight = px(0)
+      )
+    ),
+    locations = list(
+      cells_body()
+    )
+  ) |> 
+  grand_summary_rows(
+    columns = contains('pos'),
+    fns = list(
+      Consensus ~ get_consensus_return_bar(.) |> 
+        div(style = 'width:100%;height:50px;') |> 
+        as.character(),
+      Sequence ~ names(get_consensus(.)) |> 
+        
+        # change to double dash, otherwise fmt_markdown turns it into a list (ul)
+        stringr::str_replace('-', '--')
+    ),
+    fmt =   list(
+      bar ~  fmt_markdown(.)
+    )
+  ) |> 
+  
+  # style the sequence, center elements, adjust size
+  tab_style(
+    style = cell_text(
+      size = "small",
+      align = 'center',
+      indent = 0
+    ),
+    locations = cells_body(columns = contains('pos_'))
+  ) |>
+  cols_width(
+    1 ~ px(60),
+    name ~ px(50),
+    start ~ px(40), 
+    everything() ~ px(13)
+  ) |> 
+  cols_align( 'right', group:start) |> 
+  
+  # breaks
+  cols_label_with(
+    fn = ~ifelse(. %in% breaks, ., '') |>  str_remove('pos_'), 
+    columns = contains('pos_')
+  ) |>  
+  tab_options(
+  
+    row_group.as_column = TRUE,
+    grand_summary_row.padding.horizontal = px(0),
+    table.font.size = 14,
+    
+    # adjust spacing
+    data_row.padding.horizontal = px(2), 
+    data_row.padding = px(2),
+    
+    # remove borders
+    table.border.top.style = "hidden",
+    table.border.bottom.style = "hidden",
+    grand_summary_row.border.width = px(0)
+  ) |> 
+  
+  # annotation regions in the alignment
+  tab_spanner(
+    columns = pos_1:pos_21,
+    label = 'Stem helix'
+  ) |> 
+  tab_spanner(
+    columns = pos_33:pos_80,
+    label = "HR2 region"
+  ) |> 
+  tab_spanner(
+    columns = pos_91:pos_95,
+    label = "TM region"
+  ) |> 
+  tab_style(
+    style = cell_borders(sides = 'left', weight = px(2)),
+    locations = cells_body(columns = pos_11)
+  ) |> 
+  tab_style(
+    style = cell_borders(sides = 'right', weight = px(2)),
+    locations = cells_body(columns = pos_19)
+  ) |> 
+  tab_style(
+    style = cell_borders(sides = c('top'),  weight = px(2)),
+    locations = cells_body(columns = pos_11:pos_19, rows = 1)
+  )|> 
+  tab_style(
+    style = cell_borders(sides = c('bottom'),  weight = px(2)),
+    locations = cells_body(columns = pos_11:pos_19, rows = nrow(tbl_data))
+  ) |> 
+  
+  # epitope
+  cols_label(
+    pos_14 ~ '*',
+    pos_15 ~ '',
+    pos_16 ~ '*',
+    pos_17 ~ '*'
+  )
+```
 
