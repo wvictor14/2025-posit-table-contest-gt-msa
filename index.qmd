@@ -254,15 +254,15 @@ tbl_data |>
   ) |> 
   tab_style(
     style = cell_borders(sides = 'right', weight = px(2)),
-    locations = cells_body(columns = pos_19)
+    locations = cells_body(columns = pos_18)
   ) |> 
   tab_style(
     style = cell_borders(sides = c('top'),  weight = px(2)),
-    locations = cells_body(columns = pos_11:pos_19, rows = 1)
+    locations = cells_body(columns = pos_11:pos_18, rows = 1)
   )|> 
   tab_style(
     style = cell_borders(sides = c('bottom'),  weight = px(2)),
-    locations = cells_body(columns = pos_11:pos_19, rows = nrow(tbl_data))
+    locations = cells_body(columns = pos_11:pos_18, rows = nrow(tbl_data))
   ) |> 
   
   # epitope
@@ -270,7 +270,8 @@ tbl_data |>
     pos_14 ~ '*',
     pos_15 ~ '',
     pos_16 ~ '*',
-    pos_17 ~ '*'
+    pos_17 ~ '*',
+    pos_19 ~ '!',
   )
 ```
 
