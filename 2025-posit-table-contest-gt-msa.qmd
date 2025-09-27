@@ -353,11 +353,61 @@ gt_with_consensus |>
 When adjusting the column width to a small value, the left/right cell padding makes the letters off-center. We can adjust that with `tab_options`
 
 ```{r}
+#| column: page
+
 gt_with_consensus |> 
   cols_label_with(fn = ~ifelse(. %in% breaks, ., '') |>  str_remove('pos_')) |> 
   tab_options(
-    data_row.padding.horizontal = px(2),
-    data_row.padding = px(2)
+    data_row.padding.horizontal = px(2), # reduce left/right padding
+    data_row.padding = px(2) # also reduce vertical padding, to make them look more square
   )
 ```
 
+
+# annotations
+
+```{r}
+#| column: page
+gt_with_consensus |> 
+  cols_label_with(fn = ~ifelse(. %in% breaks, ., '') |>  str_remove('pos_')) |> 
+  tab_options(
+    data_row.padding.horizontal = px(2), 
+    data_row.padding = px(2) 
+  ) |> 
+  tab_spanner(
+    columns = pos_1:pos_21,
+    label = 'Stem helix'
+  ) |> 
+  tab_spanner(
+    columns = pos_33:pos_80,
+    label = "HR2 region"
+  ) |> 
+  tab_spanner(
+    columns = pos_91:pos_95,
+    label = "TM region"
+  ) |> 
+  tab_style(
+    style = cell_borders(sides = 'left', weight = px(2)),
+    locations = cells_body(columns = pos_12)
+  ) |> 
+  tab_style(
+    style = cell_borders(sides = 'right', weight = px(2)),
+    locations = cells_body(columns = pos_19)
+  ) |> 
+  tab_style(
+    style = cell_borders(sides = c('top'),  weight = px(2)),
+    locations = cells_body(columns = pos_12:pos_19, rows = 1)
+  )|> 
+  tab_style(
+    style = cell_borders(sides = c('bottom'),  weight = px(2)),
+    locations = cells_body(columns = pos_12:pos_19, rows = nrow(gt_with_consensus$`_data`))
+  ) |> 
+  cols_label(
+    pos_14 ~ '*',
+    pos_15 ~ '',
+    pos_16 ~ '*',
+    pos_17 ~ '*'
+  )
+```
+
+# style 
