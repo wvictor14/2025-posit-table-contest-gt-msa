@@ -1,0 +1,23 @@
+---
+title: "Visualizing Multiple Sequence Aligments with r-gt!"
+format: 
+  html:
+    toc: true
+    number-sections: true
+    code-tools: true
+    anchor-sections: true
+    html-table-processing: none
+editor: 
+  render-on-save: true
+editor_options: 
+  chunk_output_type: console
+---
+
+Multiple sequence alignment (MSA) is a technique to understand the similarity between different biological sequences ....
+
+For the Posit Table contest I wanted to explore how MSAs can be visualized using the r package gt. This has been something I have wanted to do for a long time. So I'm excited for this opportunity.
+
+The data we are working with is from this Wang 2021, Figure 5, which visualizes an MSA of COVID spike proteins from various species. The visualization left an impression on me: there are similarities and differences between these sequences in a very important part of the protein! 
+
+
+
