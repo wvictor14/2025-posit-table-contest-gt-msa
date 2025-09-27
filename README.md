@@ -1,8 +1,6 @@
 
 # Multiple Sequence Alignments with r-gt
 
-<!-- badges: start -->
-<!-- badges: end -->
+https://www.nature.com/articles/s41467-021-21968-w#Abs1
 
-
-SARSCOV2 TCR  Table s1 https://www.sciencedirect.com/science/article/pii/S2001037023000375#sec0095
+Wang, C., van Haperen, R., Gutiérrez-Álvarez, J. et al. A conserved immunogenic and vulnerable site on the coronavirus spike protein delineated by cross-reactive monoclonal antibodies. Nat Commun 12, 1715 (2021). https://doi.org/10.1038/s41467-021-21968-w
