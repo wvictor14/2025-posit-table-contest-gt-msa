@@ -170,6 +170,8 @@ breaks <- generate_breaks(tbl_data)
 tbl_data |> 
   gt(rowname_col = c('name'), groupname_col = 'group') |> 
   data_color_msa() |> 
+  
+  # add consensus sequence
   grand_summary_rows(
     columns = contains('pos'),
     fns = list(
@@ -187,7 +189,8 @@ tbl_data |>
     missing = ''
   ) |> 
   
-  # make sure that the consensus sequence elements are centered
+  ## style consensus sequence
+  ### make sure that the consensus sequence elements are centered
   tab_style(
     style = cell_text(align = 'center'),
     locations = cells_grand_summary(columns = contains('pos_'))
@@ -197,14 +200,14 @@ tbl_data |>
     locations = list(cells_grand_summary(rows = 1), cells_stub_grand_summary(rows = 1))
   ) |> 
   
-  # style the sequence, center elements, adjust size
+  # style the sequence elements: center elements, adjust size
   tab_style(
     style = cell_text(
       size = "small",
       align = 'center',
       indent = 0
     ),
-    locations = cells_body(columns = contains('pos_'))
+    locations = list(cells_body(columns = contains('pos_')), cells_grand_summary(columns = contains('pos_')))
   ) |>
   cols_width(
     1 ~ px(60),
