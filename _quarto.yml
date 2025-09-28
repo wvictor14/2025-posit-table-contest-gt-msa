@@ -18,3 +18,8 @@ website:
         href:  https://github.com/wvictor14/2025-posit-table-contest-gt-msa/
 
 bibliography: references.bib
+
+format:
+  html:
+    theme: cosmo
+    css: styles.css
