@@ -170,17 +170,6 @@ breaks <- generate_breaks(tbl_data)
 tbl_data |> 
   gt(rowname_col = c('name'), groupname_col = 'group') |> 
   data_color_msa() |> 
-  tab_style(
-    style = list(
-      cell_borders(
-        sides = 'all',
-        weight = px(0)
-      )
-    ),
-    locations = list(
-      cells_body()
-    )
-  ) |> 
   grand_summary_rows(
     columns = contains('pos'),
     fns = list(
@@ -194,7 +183,8 @@ tbl_data |>
     ),
     fmt =   list(
       bar ~  fmt_markdown(.)
-    )
+    ),
+    missing = ''
   ) |> 
   
   # style the sequence, center elements, adjust size
@@ -219,20 +209,18 @@ tbl_data |>
     fn = ~ifelse(. %in% breaks, ., '') |>  str_remove('pos_'), 
     columns = contains('pos_')
   ) |>  
-  tab_options(
   
-    row_group.as_column = TRUE,
-    grand_summary_row.padding.horizontal = px(0),
-    table.font.size = 14,
-    
-    # adjust spacing
-    data_row.padding.horizontal = px(2), 
-    data_row.padding = px(2),
-    
-    # remove borders
-    table.border.top.style = "hidden",
-    table.border.bottom.style = "hidden",
-    grand_summary_row.border.width = px(0)
+  # remove borders from the table body
+  tab_style(
+    style = list(
+      cell_borders(
+        sides = 'all',
+        weight = px(0)
+      )
+    ),
+    locations = list(
+      cells_body()
+    )
   ) |> 
   
   # annotation regions in the alignment
@@ -248,6 +236,8 @@ tbl_data |>
     columns = pos_91:pos_95,
     label = "TM region"
   ) |> 
+  
+  # add a rectangle to highlight region
   tab_style(
     style = cell_borders(sides = 'left', weight = px(2)),
     locations = cells_body(columns = pos_11)
@@ -260,10 +250,13 @@ tbl_data |>
     style = cell_borders(sides = c('top'),  weight = px(2)),
     locations = cells_body(columns = pos_11:pos_18, rows = 1)
   )|> 
+  
+  # For the bottom border of the rectangle, need to target the top border of grand summary, if present
+  # if grand summary is not present, need to target the bottom of the cells_body
   tab_style(
-    style = cell_borders(sides = c('bottom'),  weight = px(2)),
-    locations = cells_body(columns = pos_11:pos_18, rows = nrow(tbl_data))
-  ) |> 
+    style = cell_borders(sides = c('top'),  weight = px(2), style = 'solid'),
+    locations = cells_grand_summary(columns = pos_11:pos_18, rows = 1)
+  )  |> 
   
   # epitope
   cols_label(
@@ -272,6 +265,22 @@ tbl_data |>
     pos_16 ~ '*',
     pos_17 ~ '*',
     pos_19 ~ '!',
-  )
+  ) |> 
+  
+  # borders, style
+  tab_options(
+    
+    row_group.as_column = TRUE,
+    grand_summary_row.padding.horizontal = px(0), # padding creates space between the bars
+    table.font.size = 14,
+    # 
+    # # adjust spacing
+    data_row.padding.horizontal = px(2), 
+    data_row.padding = px(2),
+    # 
+    # # remove borders
+    table.border.top.style = "hidden",
+    grand_summary_row.border.width = px(2)
+  ) 
 ```
 
