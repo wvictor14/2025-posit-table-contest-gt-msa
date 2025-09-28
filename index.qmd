@@ -19,7 +19,9 @@ For the 2025 Posit Table contest I wanted to explore how MSAs can be visualized 
 
 The data we are working with is an msa from [@Wang2021], where they identified a potential universally conserved "weak spot" in Coronavirus spike proteins using cross-reactive monoclonal antibodies. Finding antibodies specific to the spike protein were essential steps to developing the COVID-19 vaccines that saved millions of lives in the pandemic.
 
-[Figure 5](https://www.nature.com/articles/s41467-021-21968-w/figures/5), shows an MSA of COVID spike proteins from several coronavirus species: SARS-CoV, SARS-CoV-2, MERS-COV, and HCoV-OC43 (the common cold). The visualization left an impression on me. Clearly there is large divergence between these protein sequences, yet they share a region with enough similarity that these authors were able to identify binders reactive to all species!
+[Figure 5](https://www.nature.com/articles/s41467-021-21968-w/figures/5), shows an MSA of COVID spike proteins from several coronavirus species: SARS-CoV, SARS-CoV-2, MERS-COV, and HCoV-OC43 (the common cold). This visualization immediately left an impression on me. Clearly there is large divergence between these protein sequences, yet they share a region with enough similarity that these authors were able to identify antibodies that can bind to these relatively divergent species.
+
+Let's see how we can use `gt` and MSAs to understand coronavirus protein sequences!
 
 # Setup {.hidden}
 
@@ -339,29 +341,27 @@ The stem helix region refers to a part of the protein that forms a spiral like s
 
 ## HR2 region
 
-The epitope occurs upstream of the Heptad Repeat Region 2 (HR2). Why is it called "Heptad Repeat", because this is region where every 7 amino acids tends to be repeated. 
-
-Can you spot the pattern? (If you can, do let me know because I can't)
-
 ```{r}
 #| column: screen
 base_table |> 
   gt::data_color(columns = pos_33:pos_80, fn = apply_color_to_aa(palette = 'LETTER')) 
 ```
 
+The epitope occurs upstream of the Heptad Repeat Region 2 (HR2). Why is it called "Heptad Repeat", because this is region where every 7 amino acids tends to be repeated. 
+
+Can you spot the pattern? (If you can, do let me know because I can't)
+
 ## Hydrophicity
-
-Heptad repeat regions are typically identified via 3d structural modelling. Meaning, it is unlikely to be observed on a raw linear amino acid sequence. The exact amino acid length of each repeat is also imperfect, and not necessarily is the same amino acid repeated, but just one that is highly similar - usually a hydrophobic amino acid (e.g. leucine, valine, phenylalanine).
-
-Still we can visualize this region by each amino acids relative hydrophobicity, and then we can see there is generally-speaking a repetitive nature to this region.
-
-Hydrophobicity
 
 ```{r}
 #| column: screen
 base_table |> 
   gt::data_color(columns = pos_33:pos_80, fn = apply_color_to_aa(palette = 'Hydrophobicity')) 
 ```
+
+Heptad repeat regions are typically identified via 3d structural modelling. Meaning, it is unlikely to be observed on a raw linear amino acid sequence. The exact amino acid length of each repeat is also imperfect, and not necessarily is the same amino acid repeated, but just one that is highly similar - usually a hydrophobic amino acid (e.g. leucine, valine, phenylalanine).
+
+Still we can visualize this region by each amino acids relative hydrophobicity, and then we can see there is generally-speaking a repetitive nature to this region.
 
 ## TM region
 
