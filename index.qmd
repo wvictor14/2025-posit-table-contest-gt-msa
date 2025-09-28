@@ -1,5 +1,5 @@
 ---
-title: "Visualizing Multiple Sequence Aligments with r-gt!"
+title: "Multiple Sequence Alignments with r-gt!"
 format: 
   html:
     code-fold: true
@@ -13,15 +13,15 @@ editor_options:
   chunk_output_type: console
 ---
 
-Multiple sequence alignment (MSA) is a technique to understand the similarity and differences between biological sequences. This technique is useful for identifying conserved functional regions, and understanding evolutionary relationships.
+Multiple sequence alignment (MSA) is a computational technique to compare biological sequences, and identify regions of similarity and differences. This approach is used for identifying conserved functional domains, and understanding evolutionary relationships between related proteins.
 
-For the 2025 Posit Table contest I wanted to explore how MSAs can be visualized using the r package [gt](https://gt.rstudio.com/). This has been something I have wanted to do for a long time. So I'm excited for this opportunity.
+For the 2025 Posit Table contest I wanted to explore how MSAs can be effectively visualized using the r package [gt](https://gt.rstudio.com/). This has been something I have wanted to do for a long time, and I'm excited to share this exploration.
 
-The data we are working with is an msa from [@Wang2021], where they identified a potential universally conserved "weak spot" in Coronavirus spike proteins using cross-reactive monoclonal antibodies. Finding antibodies specific to the spike protein were essential steps to developing the COVID-19 vaccines that saved millions of lives in the pandemic.
+The data we are working with is an MSA from [@Wang2021], where they identified a potential universally conserved "weak spot" in Coronavirus spike proteins to specific cross-reactive monoclonal antibodies. The spike protein was the primary target for developing the COVID-19 vaccines, which crucially saved millions of lives during in the fight against the pandemic.
 
-[Figure 5](https://www.nature.com/articles/s41467-021-21968-w/figures/5), shows an MSA of COVID spike proteins from several coronavirus species: SARS-CoV, SARS-CoV-2, MERS-COV, and HCoV-OC43 (the common cold). This visualization immediately left an impression on me. Clearly there is large divergence between these protein sequences, yet they share a region with enough similarity that these authors were able to identify antibodies that can bind to these relatively divergent species.
+[Figure 5](https://www.nature.com/articles/s41467-021-21968-w/figures/5) from their study presents an MSA comparing spike proteins from several coronavirus species: SARS-CoV, SARS-CoV-2, MERS-CoV, and HCoV-OC43 (which causes the common cold). I was struck by this visualization because of the apparent contradiction it revealed: despite there being large divergence between these species, the authors were able to identify a region with enough similarity to serve as target for broadly reactive antibodies.
 
-Let's see how we can use `gt` and MSAs to understand coronavirus protein sequences!
+Let's explore how we can leverage `gt` with MSAs to better understand the evolutionary relationships between coronavirus protein sequences!
 
 # Setup {.hidden}
 
@@ -65,9 +65,9 @@ tbl_data <- msa_long |>
   )
 ```
 
-Custom functions
+## Custom functions
 
-## Palette
+### Palette
 
 ```{r}
 #' returns a coloring function based on chosen palette
@@ -92,7 +92,7 @@ apply_color_to_aa <- function(
 }
 ```
 
-## Consensus
+### Consensus
 
 ```{r}
 #' This version sets the parent div to be 100% width and height
@@ -141,7 +141,9 @@ c('X', 'X', 'O')|>  get_consensus_return_bar()  |> browsable()
 c('X', 'O')|>  get_consensus_return_bar()  |> browsable()
 ```
 
-breaks
+### Breaks
+
+`generate_breaks` takes the position columns and returns which ones to label. Uses `scales::breaks_width` to generate a break every 5 amino acids.
 
 ```{r}
 #' Treats the column names as an axis, and generates breaks using `scales::breaks_width`
@@ -163,11 +165,54 @@ generate_breaks <- function(tbl, width = 5) {
 breaks <- generate_breaks(tbl_data)
 ```
 
-#  
+### Highlight a region with a rectangle
+
+Annotates the sequences with a rectangle around a specific region. Only works on ungrouped `gt`.
+
+This function is not well generalized.
+
+```{r}
+#' Draws a rectangle around a section in a gt table
+#' 
+#' @param .gt_tbl a gt table
+#' @param start start column
+#' @param end end column
+annotate_rectangle <- function(.gt_tbl, start, end) {
+  
+  .gt_tbl |> 
+    # add a rectangle to highlight region
+    tab_style(
+      style = cell_borders(sides = 'left', weight = px(2)),
+      locations = cells_body(columns = {{start}})
+    ) |> 
+    tab_style(
+      style = cell_borders(sides = 'right', weight = px(2)),
+      locations = cells_body(columns = {{end}})
+    ) |> 
+    tab_style(
+      style = cell_borders(sides = c('top'),  weight = px(2)),
+      locations = cells_body(columns = {{start}}:{{end}}, rows = 1)
+    )|> 
+    
+    # For the bottom border of the rectangle, need to target the top border of grand summary, if present
+    # if grand summary is not present, need to target the bottom of the cells_body
+    tab_style(
+      style = cell_borders(sides = c('top'),  weight = px(2), style = 'solid'),
+      locations = cells_grand_summary(columns = {{start}}:{{end}}, rows = 1)
+    ) 
+}
+
+```
+
+# Visualizing Conserved Regions Across Coronvirus Spike Proteins
+
+Click through the tabs below to explore each region of the coronavirus spike protein alignment in detail.
 
 ::: {.panel-tabset .nav-pills}
 
 ## Spike Protein
+
+This is my re-creation of the msa figure of coronavirus spike proteins
 
 ```{r}
 #| column: screen
@@ -253,27 +298,6 @@ base_table <- tbl_data |>
     label = "TM region"
   ) |> 
   
-  # add a rectangle to highlight region
-  tab_style(
-    style = cell_borders(sides = 'left', weight = px(2)),
-    locations = cells_body(columns = pos_11)
-  ) |> 
-  tab_style(
-    style = cell_borders(sides = 'right', weight = px(2)),
-    locations = cells_body(columns = pos_18)
-  ) |> 
-  tab_style(
-    style = cell_borders(sides = c('top'),  weight = px(2)),
-    locations = cells_body(columns = pos_11:pos_18, rows = 1)
-  )|> 
-  
-  # For the bottom border of the rectangle, need to target the top border of grand summary, if present
-  # if grand summary is not present, need to target the bottom of the cells_body
-  tab_style(
-    style = cell_borders(sides = c('top'),  weight = px(2), style = 'solid'),
-    locations = cells_grand_summary(columns = pos_11:pos_18, rows = 1)
-  )  |> 
-  
   # epitope
   cols_label(
     pos_14 ~ '*',
@@ -302,13 +326,16 @@ base_table <- tbl_data |>
     table.border.top.style = "hidden",
     grand_summary_row.border.width = px(2)
   )  
+
 base_table |> 
-  gt::data_color(columns = contains('pos_'), fn = apply_color_to_aa(palette = 'Chemistry_AA')) 
+  gt::data_color(columns = contains('pos_'), fn = apply_color_to_aa(palette = 'Chemistry_AA'))
 ```
 
-This is my re-creation of the msa figure of coronavirus spike proteins. 
+This 95 amino acid long region centers around the epitope, which is where the antibodies bind to. Within this region, there are several conserved structural components: the stem helix, heptad repeat region 2 (HR2) and the transmembrane domain (TM). Click through the rest of these sections, as I use `gt` to help understand the amino acid composition of these regions in detail.
 
-This 95 amino acid long region centers around the epitope that the antibodies bind to. There are structural components in this region where the epitope lies, the stem helix, the heptad repeat region 2 (HR2) and the transmembrane domain (TM). Click through the rest of these sections, as I use `gt` to help understand the amino acid composition of each protein region.
+**MSA Color Palettes**
+
+MSAs commonly utilize colors to help readers better understand the variability in amino acid composition in biological sequences. Amino acids have all sorts of properties, such as hydrophobicity, size, and 3D structure.
 
 This particular msa uses a color palette that groups chemically-similar amino acids together:
 
@@ -318,57 +345,80 @@ This particular msa uses a color palette that groups chemically-similar amino ac
 - Polar amino acids asparagine (N), threonine (T), cysteine (C), glutamine (Q), and serine (S) are [green]{style="background-color: #74ce98;"}
 - Aromatic amino acids phenylalanine (F), tyrosine (Y), and tryptophan (W) are [yellow]{style="background-color: #ffff66;"}
 
-There are quite a few of bioinformatic color palettes for amino acids out there. I implemented a few different ones that I think help understand the amino acid composition. I will call them out in the following visualizations.
+Different color palettes higlight properties amino acids differently. In this analysis, I implemented a several alternative palettes and explore how effective they can be used to understand the amino acid composition of protein sequences.
 
 ## Core Epitope Region
 
+Where antibodies bind
 
 ```{r}
 #| column: screen
 base_table |> 
-  gt::data_color(columns = pos_11:pos_19, fn = apply_color_to_aa(palette = 'Chemistry_AA')) 
+  gt::data_color(columns = pos_11:pos_19, fn = apply_color_to_aa(palette = 'Chemistry_AA')) |> 
+  annotate_rectangle(start = pos_11, end = pos_18)
 ```
 
-The authors fixate on this particular highlighted region, which is where the binding to their antibodies happen (which arenamed 28D9 and 1.6C7, very creative right?). This region is referred to as the "core epitope", and asterisks are indicating the key amino acids that are critical for binding. The authors identified these key amino acids through an experiment of changing each amino acid one at a time, systematically measuring if any amino acid change would impact binding. Importantly, some variability within this epitope region can occur without affecting binding, which is clearly shown by this figure. 
+At the end of the Stem Helix region lies the 28D9/1.6C7 (the very creative names of the antibodies) epitope region. This is where the magic happens. Referred to also as the "core epitope", asterisk are indicating where key amino acid positions are for binding. If these positions are replaced with other amino acids, the antibodies can no longer bind effectively. How did the researchers determine this? By, quite literally, systematically changing each amino acid one at a time and measuring antibody binding. This is known as a mutagensis experiment, and it importantly revealed that some amino acids can vary without affecting binding too much, but these 3 amino acids are critical.
 
 The exclamation point marks an adjacent amino acid which the authors refer to as a "conserved glycosylation sequon", or "NxS/T". This means this is an amino acid that sugar can attach to, and it follows the pattern of "the amino acid N, followed by any amino acid X, and then either an S or a T". Apparently this is a conserved pattern among coronavirus species. What's significant here is the authors suggest that this sugar molecule may be potentially important for the binding of these antibodies to this epitope.
 
 ## Stem helix
 
+The stem helix region refers to a part of the protein that forms a spiral like structure
 ```{r}
 #| column: screen
 base_table |> 
-  gt::data_color(columns = pos_1:pos_21, fn = apply_color_to_aa(palette = 'Shapely_AA')) 
+  gt::data_color(columns = pos_1:pos_21, fn = apply_color_to_aa(palette = 'Shapely_AA')) |> 
+  annotate_rectangle(start = pos_1, end = pos_21)
 ```
 
-The stem helix region refers to a part of the protein that forms a spiral like structure. It's the orange part highlighted here:
+It's the orange part highlighted in this figure from the authors protein modeling figure.
 
 ![](stem_helix.png){height=4in}
 
 ## HR2 region
 
+The Heptad Repeat Region 2
+
 ```{r}
 #| column: screen
 base_table |> 
-  gt::data_color(columns = pos_33:pos_80, fn = apply_color_to_aa(palette = 'LETTER')) 
+  gt::data_color(columns = pos_33:pos_80, fn = apply_color_to_aa(palette = 'LETTER')) |> 
+  annotate_rectangle(start = pos_33, end = pos_80) 
 ```
 
 The epitope occurs upstream of the Heptad Repeat Region 2 (HR2). Why is it called "Heptad Repeat", because this is region where every 7 amino acids tends to be repeated. 
 
 Can you spot the pattern? (If you can, do let me know because I can't)
 
-## Hydrophicity
+## A special lens
+
+Hidden patterns in linear sequence
 
 ```{r}
 #| column: screen
 base_table |> 
-  gt::data_color(columns = pos_33:pos_80, fn = apply_color_to_aa(palette = 'Hydrophobicity')) 
+  gt::data_color(columns = pos_33:pos_80, fn = apply_color_to_aa(palette = 'Hydrophobicity')) |> 
+  annotate_rectangle(start = pos_33, end = pos_80)
 ```
 
-Heptad repeat regions are typically identified via 3d structural modelling. Meaning, it is unlikely to be observed on a raw linear amino acid sequence. The exact amino acid length of each repeat is also imperfect, and not necessarily is the same amino acid repeated, but just one that is highly similar - usually a hydrophobic amino acid (e.g. leucine, valine, phenylalanine).
+Heptad repeat regions are typically identified via 3D structural modelling. Meaning, the repetitive-ness of these regions are difficult to be observed when viewing linear amino acid sequences. The exact amino acid length of each repeat is also imperfect, and not necessarily is the same amino acid repeated, but just one that is highly similar - usually a hydrophobic amino acid (e.g. leucine, valine, phenylalanine). These typically occur at position 1 and 4 of each seven amino acid unit.
 
-Still we can visualize this region by each amino acids relative hydrophobicity, and then we can see there is generally-speaking a repetitive nature to this region.
+We can try to see this pattern using a special lens - a color palette that highlights the relative hydrophobicity between amino acids.
 
 ## TM region
+
+Anchoring the protein
+
+```{r}
+#| column: screen
+base_table |> 
+  gt::data_color(columns = pos_91:pos_95, fn = apply_color_to_aa(palette = 'Taylor_AA')) |> 
+  annotate_rectangle(start = pos_91, end = pos_95)
+```
+
+The final region is called the transmembrane (TM) region, which is the part of the protein that spans across a phospholipid bilayer. It is an important structural component that anchors the spike protein to the viral envelope. 
+
+Because of the lipid-rich environment of this layer, TM regions contain many hyrophobic and nonpolar residues - such as tryptophan (W), tyrosine (Y), valine (V), and leucine (L).
 
 :::
