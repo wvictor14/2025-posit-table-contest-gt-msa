@@ -187,6 +187,16 @@ tbl_data |>
     missing = ''
   ) |> 
   
+  # make sure that the consensus sequence elements are centered
+  tab_style(
+    style = cell_text(align = 'center'),
+    locations = cells_grand_summary(columns = contains('pos_'))
+  ) |> 
+  tab_style(
+    style = cell_borders(sides = 'bottom', style = 'hidden'),
+    locations = list(cells_grand_summary(rows = 1), cells_stub_grand_summary(rows = 1))
+  ) |> 
+  
   # style the sequence, center elements, adjust size
   tab_style(
     style = cell_text(
@@ -271,16 +281,20 @@ tbl_data |>
   tab_options(
     
     row_group.as_column = TRUE,
-    grand_summary_row.padding.horizontal = px(0), # padding creates space between the bars
     table.font.size = 14,
-    # 
-    # # adjust spacing
+     
+    # adjust padding in the cell body
     data_row.padding.horizontal = px(2), 
     data_row.padding = px(2),
-    # 
+    
+    # adjust padding in the grand summary
+    # Noting that padding creates space between the bars (which have 100% width)
+    grand_summary_row.padding.horizontal = px(0), 
+    grand_summary_row.padding = px(2),
+    
     # # remove borders
     table.border.top.style = "hidden",
     grand_summary_row.border.width = px(2)
-  ) 
+  )  
 ```
 
