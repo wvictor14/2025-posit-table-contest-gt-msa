@@ -17,10 +17,9 @@ Multiple sequence alignment (MSA) is a technique to understand the similarity an
 
 For the 2025 Posit Table contest I wanted to explore how MSAs can be visualized using the r package [gt](https://gt.rstudio.com/). This has been something I have wanted to do for a long time. So I'm excited for this opportunity.
 
-The data we are working with is an msa from [@Wang2021], where they identified a potential universally conserved "weak spot" in Coronavirus spike proteins using cross-reactive monoclonal antibodies.  
+The data we are working with is an msa from [@Wang2021], where they identified a potential universally conserved "weak spot" in Coronavirus spike proteins using cross-reactive monoclonal antibodies. Finding antibodies specific to the spike protein were essential steps to developing the COVID-19 vaccines that saved millions of lives in the pandemic.
 
-[Figure 5](https://www.nature.com/articles/s41467-021-21968-w/figures/5), shows an MSA of COVID spike proteins from several coronavirus species: SARS-CoV, SARS-CoV-2, MERS-COV, and HCoV-OC43 (the common cold). The visualization left an impression on me: there are similarities and differences between these sequences in a very important part of the protein! 
-
+[Figure 5](https://www.nature.com/articles/s41467-021-21968-w/figures/5), shows an MSA of COVID spike proteins from several coronavirus species: SARS-CoV, SARS-CoV-2, MERS-COV, and HCoV-OC43 (the common cold). The visualization left an impression on me. Clearly there is large divergence between these protein sequences, yet they share a region with enough similarity that these authors were able to identify binders reactive to all species!
 
 # Setup {.hidden}
 
@@ -162,7 +161,11 @@ generate_breaks <- function(tbl, width = 5) {
 breaks <- generate_breaks(tbl_data)
 ```
 
-# 
+#  
+
+::: {.panel-tabset .nav-pills}
+
+## Spike Protein
 
 ```{r}
 #| column: screen
@@ -283,7 +286,7 @@ base_table <- tbl_data |>
     
     row_group.as_column = TRUE,
     table.font.size = 14,
-     
+    
     # adjust padding in the cell body
     data_row.padding.horizontal = px(2), 
     data_row.padding = px(2),
@@ -300,3 +303,66 @@ base_table <- tbl_data |>
 base_table |> 
   gt::data_color(columns = contains('pos_'), fn = apply_color_to_aa(palette = 'Chemistry_AA')) 
 ```
+
+This is my re-creation of the msa figure of coronavirus spike proteins. I implemented a palette that groups chemically similar amino acids together:
+
+- Acidic amino acids glutamic (E) and aspartic acid (D) are [red]{style="background-color: #ff6d6d;"}
+- Nonpolar/hydrophobic amino acids proline (P), alanine (A), valine (V), methionine (M), leucine (L), isoleucine (I), and glycine (G) are [orange]{style="background-color: #f2be3c;"}
+- Basic amino acids lysine (K) and arginine (R) are [blue]{style="background-color: #769dcc;"}
+- Polar amino acids asparagine (N), threonine (T), cysteine (C), glutamine (Q), and serine (S) are [green]{style="background-color: #74ce98;"}
+- Aromatic amino acids phenylalanine (F), tyrosine (Y), and tryptophan (W) are [yellow]{style="background-color: #ffff66;"}
+
+## Core Epitope Region
+
+
+```{r}
+#| column: screen
+base_table |> 
+  gt::data_color(columns = pos_11:pos_19, fn = apply_color_to_aa(palette = 'Chemistry_AA')) 
+```
+
+The authors fixate on this particular highlighted region, which is where the binding to their antibodies happen (which arenamed 28D9 and 1.6C7, very creative right?). This region is referred to as the "core epitope", and asterisks are indicating the key amino acids that are critical for binding. The authors identified these key amino acids through an experiment of changing each amino acid one at a time, systematically measuring if any amino acid change would impact binding. Importantly, some variability within this epitope region can occur without affecting binding, which is clearly shown by this figure. 
+
+The exclamation point marks an adjacent amino acid which the authors refer to as a "conserved glycosylation sequon", or "NxS/T". This means this is an amino acid that sugar can attach to, and it follows the pattern of "the amino acid N, followed by any amino acid X, and then either an S or a T". Apparently this is a conserved pattern among coronavirus species. What's significant here is the authors suggest that this sugar molecule may be potentially important for the binding of these antibodies to this epitope.
+
+## Stem helix
+
+```{r}
+#| column: screen
+base_table |> 
+  gt::data_color(columns = pos_1:pos_21, fn = apply_color_to_aa(palette = 'Shapely_AA')) 
+```
+
+The stem helix region refers to a part of the protein that forms a spiral like structure. It's the orange part highlighted here:
+
+![](stem_helix.png){height=4in}
+
+## HR2 region
+
+The epitope occurs upstream of the Heptad Repeat Region 2 (HR2). Why is it called "Heptad Repeat", because this is region where every 7 amino acids tends to be repeated. 
+
+Can you spot the pattern? (If you can, do let me know because I can't)
+
+```{r}
+#| column: screen
+base_table |> 
+  gt::data_color(columns = pos_33:pos_80, fn = apply_color_to_aa(palette = 'LETTER')) 
+```
+
+## Hydrophicity
+
+Heptad repeat regions are typically identified via 3d structural modelling. Meaning, it is unlikely to be observed on a raw linear amino acid sequence. The exact amino acid length of each repeat is also imperfect, and not necessarily is the same amino acid repeated, but just one that is highly similar - usually a hydrophobic amino acid (e.g. leucine, valine, phenylalanine).
+
+Still we can visualize this region by each amino acids relative hydrophobicity, and then we can see there is generally-speaking a repetitive nature to this region.
+
+Hydrophobicity
+
+```{r}
+#| column: screen
+base_table |> 
+  gt::data_color(columns = pos_33:pos_80, fn = apply_color_to_aa(palette = 'Hydrophobicity')) 
+```
+
+## TM region
+
+:::
