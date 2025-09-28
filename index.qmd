@@ -306,13 +306,19 @@ base_table |>
   gt::data_color(columns = contains('pos_'), fn = apply_color_to_aa(palette = 'Chemistry_AA')) 
 ```
 
-This is my re-creation of the msa figure of coronavirus spike proteins. I implemented a palette that groups chemically similar amino acids together:
+This is my re-creation of the msa figure of coronavirus spike proteins. 
+
+This 95 amino acid long region centers around the epitope that the antibodies bind to. There are structural components in this region where the epitope lies, the stem helix, the heptad repeat region 2 (HR2) and the transmembrane domain (TM). Click through the rest of these sections, as I use `gt` to help understand the amino acid composition of each protein region.
+
+This particular msa uses a color palette that groups chemically-similar amino acids together:
 
 - Acidic amino acids glutamic (E) and aspartic acid (D) are [red]{style="background-color: #ff6d6d;"}
 - Nonpolar/hydrophobic amino acids proline (P), alanine (A), valine (V), methionine (M), leucine (L), isoleucine (I), and glycine (G) are [orange]{style="background-color: #f2be3c;"}
 - Basic amino acids lysine (K) and arginine (R) are [blue]{style="background-color: #769dcc;"}
 - Polar amino acids asparagine (N), threonine (T), cysteine (C), glutamine (Q), and serine (S) are [green]{style="background-color: #74ce98;"}
 - Aromatic amino acids phenylalanine (F), tyrosine (Y), and tryptophan (W) are [yellow]{style="background-color: #ffff66;"}
+
+There are quite a few of bioinformatic color palettes for amino acids out there. I implemented a few different ones that I think help understand the amino acid composition. I will call them out in the following visualizations.
 
 ## Core Epitope Region
 
