@@ -4,7 +4,7 @@ date: 2025-10-03
 author: Victor Yuan
 format: 
   html:
-    theme: cosmo
+    theme: flatly
     css: styles.css
     code-fold: true
     anchor-sections: true
@@ -364,9 +364,9 @@ This color palette is from [ggmsa](https://yulab-smu.top/ggmsa/) that groups che
 
 Different color palettes higlight properties amino acids differently. In this analysis, I implemented a several alternative palettes and explore how effective they can be used to understand the amino acid composition of protein sequences.
 
-## Core Epitope Region
+## Core Epitope
 
-Where antibodies bind
+The region where the antibodies bind
 
 ```{r}
 #| column: screen
@@ -381,7 +381,8 @@ The exclamation point marks an adjacent amino acid which the authors refer to as
 
 ## Stem helix
 
-The stem helix region refers to a part of the protein that forms a spiral like structure
+This type of domain forms a 3-dimensional spiral like structure
+
 ```{r}
 #| column: screen
 base_table |> 
@@ -397,7 +398,7 @@ It's the orange part highlighted in this figure from the authors protein modelin
 
 ## HR2 region
 
-The Heptad Repeat Region 2
+HR2 stands for "Heptad Repeat Region 2"
 
 ```{r}
 #| column: screen
@@ -410,9 +411,9 @@ The epitope occurs upstream of the Heptad Repeat Region 2 (HR2). Why is it calle
 
 Can you spot the pattern? (If you can, do let me know because I can't)
 
-## A special lens
+## Viewing hydrophobocity
 
-Hidden patterns in linear sequence
+To help uncover hidden patterns in linear sequence
 
 ```{r}
 #| column: screen
