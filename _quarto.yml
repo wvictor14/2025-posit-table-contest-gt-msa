@@ -1,21 +1,6 @@
 project:
-  type: website
-
-website:
-  favicon: logo.svg
-  navbar:
-    search: false
-    title: false
-    left:
-      - href: index.qmd
-        text: "Home"
-      - href: 2025-posit-table-contest-gt-msa.qmd
-        text: "Tutorial"
-    tools:
-      - icon: linkedin
-        href:  https://linkedin.com/in/victor2wy/
-      - icon: github
-        href:  https://github.com/wvictor14/2025-posit-table-contest-gt-msa/
+  render: 
+   - "2025-posit-table-contest-gt-msa.qmd"
 
 bibliography: references.bib
 

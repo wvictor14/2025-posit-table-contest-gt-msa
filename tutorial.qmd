@@ -1,0 +1,419 @@
+---
+title: "Visualizing Multiple Sequence Aligments with r-gt!"
+format: 
+  html:
+    toc: true
+    number-sections: true
+    code-tools: true
+    anchor-sections: true
+    html-table-processing: none
+editor: 
+  render-on-save: true
+editor_options: 
+  chunk_output_type: console
+---
+
+# Setup
+
+## Libraries
+
+```{r}
+#| message: false
+library(dplyr)
+library(here)
+library(tidyr)
+library(gt)
+library(stringr)
+library(readr)
+palette_aa <- readr::read_csv('palette_amino_acids.csv')
+```
+
+## Data
+
+We take the  
+
+```{r}
+FILE_MSA <- 'msa.csv'
+msa <- readr::read_csv(FILE_MSA)
+
+# msa_tidied <- tibble(msa)
+msa_long <- msa |>  
+  mutate(seq = as.character(seq) |> str_split('')) |> 
+  tidyr::unnest(seq) |> 
+  mutate(position = row_number(), .by = name) 
+
+tbl_data <- msa_long |> 
+  pivot_wider(
+    id_cols = c(group, name, start),
+    names_from = 'position',
+    values_from = 'seq',
+    names_prefix = 'pos_'
+  )
+tbl_data
+```
+
+# gt
+
+```{r}
+tbl_data |> 
+  gt(rowname_col = 'name')
+```
+
+# color palette
+
+Let's implement Clustal color palette
+
+```{r}
+target_palette <- palette_aa |> select(symbol, Chemistry_AA) |> tibble::deframe()
+apply_color_to_aa <- function(letter) {
+  out <- target_palette[letter]
+  out[is.na(out)] <- 'grey'
+  return(out)
+}
+
+tbl_data |> 
+  gt(rowname_col = 'name') |> 
+  data_color(fn = apply_color_to_aa, columns = contains('pos')) |> 
+  cols_label_with(fn = ~str_remove(., 'pos_'))
+```
+
+
+```{r}
+data_color_msa <- function(
+    ...,
+    columns = contains('pos'),
+    palette = c(
+      'Chemistry_AA', 
+      'Shapely_AA', 
+      'Zappo_AA', 
+      'Taylor_AA', 
+      'LETTER',  
+      'Hydrophobicity'
+    )
+) {
+  target_palette <- palette_aa[,c('symbol', palette[1])] |> tibble::deframe()
+  apply_color_to_aa <- function(letter) {
+    out <- target_palette[letter]
+    out[is.na(out)] <- 'grey'
+    return(out)
+  }
+  
+  return(gt::data_color(fn = apply_color_to_aa, columns = columns, ...))
+}
+
+tbl_data |> 
+  gt(rowname_col = 'name') |> 
+  data_color_msa() |> 
+  cols_label_with(fn = ~str_remove(., 'pos_'))
+
+tbl_data |> 
+  gt(rowname_col = 'name') |> 
+  data_color_msa(palette = 'Shapely_AA')|> 
+  cols_label_with(fn = ~str_remove(., 'pos_'))
+
+
+tbl_data |> 
+  gt(rowname_col = 'name') |> 
+  data_color_msa(palette = 'Zappo_AA')|> 
+  cols_label_with(fn = ~str_remove(., 'pos_'))
+
+tbl_data |> 
+  gt(rowname_col = 'name') |> 
+  data_color_msa(palette = 'LETTER')|> 
+  cols_label_with(fn = ~str_remove(., 'pos_'))
+```
+
+
+# theme
+
+- remove the borders
+
+```{r}
+
+tbl_data |> 
+  gt(rowname_col = 'name') |> 
+  data_color_msa() |> 
+  cols_label_with(fn = ~str_remove(., 'pos_'))
+
+tbl_data |> 
+  gt(rowname_col = 'name') |> 
+  data_color_msa() |> 
+  tab_style(
+    style = list(
+      cell_borders(
+        sides = 'all',
+        weight = px(0)
+      )
+    ),
+    locations = list(
+      cells_body()
+    )
+  ) |> 
+  cols_label_with(fn = ~str_remove(., 'pos_'))
+
+```
+
+# consensus sequence
+
+2 tab summaries: 
+
+Bar chart that shows the frequency of the most frequent AA by position
+
+Consensus sequence, shows most frequent
+
+```{r}
+# make a base gt table to add onto
+gt_base <- tbl_data |> 
+  gt(rowname_col = c('name'), groupname_col = 'group') |> 
+  data_color_msa() |> 
+  tab_style(
+    style = list(
+      cell_borders(
+        sides = 'all',
+        weight = px(0)
+      )
+    ),
+    locations = list(
+      cells_body()
+    )
+  ) 
+```
+
+We need to define a function that will output the consensus letter (the most frequently occuring element), and it's frequency.
+
+```{r}
+frequency_tbl <- tbl_data[['pos_1']] |> table() |>  sort(decreasing = TRUE)
+consensus_letter <- names(frequency_tbl)[1]
+consensus_freq <- (frequency_tbl/sum(frequency_tbl))[1]
+
+paste0(consensus_letter, ":", consensus_freq)
+```
+
+Great, now wrap it into a function and send to `gt::grand_summary_rows`
+
+```{r}
+get_consensus <- function(x) {
+  frequency_tbl <- x |> table() |>  sort(decreasing = TRUE)
+  consensus_letter <- names(frequency_tbl)[1]
+  consensus_freq <- (frequency_tbl/sum(frequency_tbl))[1]
+  paste0(consensus_letter, ":", consensus_freq)
+}
+
+gt_base |> 
+  grand_summary_rows(
+    columns = contains('pos_') ,
+    fns = list(
+      consensus ~ get_consensus(.)
+    )
+  ) |> 
+  cols_label_with(fn = ~str_remove(., 'pos_'))
+```
+
+That's a great start, so we can see how the consensus data will be applied into the summary row of gt. Let's improve on this:
+
+## Generating simple bar charts in `gt::grand_summary_rows`
+
+Now to display the frequency, we can create bars using some simple html and css with the help of the package `htmltools`.
+
+We define a simple function that takes as input a number between 0 and 1 (i.e. a frequency), and outputs a div that is filled proportionally to that number.
+
+```{r}
+library(htmltools)
+library(glue)
+
+
+#' This version sets the parent div to be 100% width and height
+#' @param bar_height a number between 0 and 1 that sets the height of the bar as a percentage of the total height of the container (the parent) div
+#' @param parent_div_height valid css unit for height of the parent div
+#' @param parent_div_width valid css unit for width of the parent div
+create_html_vertical_bar <- function(
+    bar_height = .5,
+    bar_color = '#4a6fa5',
+    parent_div_height = '50px', 
+    parent_div_width = '100%'
+) {
+  .bar_height <- bar_height*100
+  div(
+    style=glue("width:{parent_div_width};height:{parent_div_height};margin:0;padding:0;"),
+    div(style=glue("height:{100-.bar_height}%;background:transparent;margin:0;padding:0;")),
+    div(style=glue("height:{.bar_height}%;background:{bar_color};margin:0;padding:0;"))
+  )
+}
+
+create_html_vertical_bar(0.5)
+```
+
+Now we can make bars! Let's redefine `get_consensus` to be more flexible and return a named vector where the elements are the frequencies and the names are the most frequent element.
+
+```{r}
+#' returns a 1-length named character vector of the most frequent amino acid, where:
+#'  - the value is the frequency
+#'  - the name is amino acid
+#'  
+#' Does not handle ties (one of the ties will be returned)
+#' @param x a vector, ideally of interesting biological sequences
+get_consensus <- function(x) {
+  
+  # drop gaps
+  frequency_tbl <- x |> table() |>  sort(decreasing = TRUE)
+  consensus_freq <- (frequency_tbl/sum(frequency_tbl))[1]
+  
+  return(consensus_freq)
+}
+
+# usage:
+tbl_data[['20']] |> get_consensus()
+```
+
+
+```{r}
+#' gets the consensus of the vector x, and returns an html bar
+get_consensus_return_bar <- function(x) {
+  consensus_freq <- get_consensus(x)
+  create_html_vertical_bar(consensus_freq) 
+}
+tbl_data[['1']] |>  get_consensus_return_bar()  |> browsable()
+
+# usage:
+c('X', 'X')|>  get_consensus_return_bar()  
+```
+
+Now we have 3 functions:
+
+`get_consensus_return_bar` which will take an element, and return the frequency for the most frequent element as an html bar. Under the hood, `get_consensus_return_bar` uses `get_consensus` which returns the frequency and the consensus element itself. We can use both these functions to create 2 grand summary rows:
+
+```{r}
+#| column: page
+gt_with_consensus <- gt_base |> 
+  grand_summary_rows(
+    columns = contains('pos'),
+    fns = list(
+      consensus_bar ~ get_consensus_return_bar(.) |> div(style = 'width:100%;height:50px;') |> as.character(),
+      consensus_seq ~ names(get_consensus(.)) |> 
+        
+        # change to double dash, otherwise fmt_markdown turns it into a list (ul)
+        stringr::str_replace('-', '--')
+    ),
+    fmt =   list(
+      bar ~  fmt_markdown(.)
+      #      "consensus" ~ fmt_passthrough(.) # doesn't work
+    )
+  ) |> 
+  tab_options(
+    row_group.as_column = TRUE,
+    grand_summary_row.padding.horizontal = px(0),
+    table.font.size = 11,
+  )  |>
+  
+  # reduce the size of the alignment to fit in page
+  tab_style(
+    style = cell_text(
+      size = "xx-small",
+      align = 'center',
+      indent = 0
+    ),
+    locations = cells_body(columns = contains('pos_'))
+  ) |>
+  cols_width(
+    1 ~ px(75),
+    name ~ px(50),
+    start ~ px(40), 
+    everything() ~ px(10)
+  )
+gt_with_consensus |> 
+  cols_label_with(fn = ~str_remove(., 'pos_')) 
+```
+
+I would like to apply the color palette to the summary row. It seems that there is no option to apply `data_color` to `summary_rows` [#1981](https://github.com/rstudio/gt/discussions/1981). (I actually forgot that I opened this issue myself - guess that means this is a function I would use often in my workflows)
+
+A future addition could be to apply raw html to the sequence based on a palette.
+
+# position
+
+Not every position in the alignment needs to be labelled. The package `scales` can be leveraged to be smart about generating `breaks` similar to how `ggplot2` does
+
+```{r}
+#| column: page
+
+#' Treats the column names as an axis, and generates breaks using `scales::breaks_width`
+#' 
+#' @return a vector of column names at every `width` position 
+generate_breaks <- function(tbl, width = 5) {
+  seq_cols <- tbl |> select(contains('pos'))
+  n_col <- seq_cols  |> ncol()
+  
+  breaks <- scales::breaks_width(width, 0)(c(1, n_col))
+  
+  # handle case where breaks extend beyond data
+  breaks <- intersect(breaks, 1:n_col)
+  
+  col_breaks <- colnames(seq_cols[,breaks])
+  return(col_breaks)
+}
+
+breaks <- generate_breaks(tbl_data)
+gt_with_consensus |> 
+  cols_label_with(fn = ~ifelse(. %in% breaks, ., '') |>  str_remove('pos_')) 
+```
+
+When adjusting the column width to a small value, the left/right cell padding makes the letters off-center. We can adjust that with `tab_options`
+
+```{r}
+#| column: page
+
+gt_with_consensus |> 
+  cols_label_with(fn = ~ifelse(. %in% breaks, ., '') |>  str_remove('pos_')) |> 
+  tab_options(
+    data_row.padding.horizontal = px(2), # reduce left/right padding
+    data_row.padding = px(2) # also reduce vertical padding, to make them look more square
+  )
+```
+
+
+# annotations
+
+```{r}
+#| column: page
+gt_with_consensus |> 
+  cols_label_with(fn = ~ifelse(. %in% breaks, ., '') |>  str_remove('pos_')) |> 
+  tab_options(
+    data_row.padding.horizontal = px(2), 
+    data_row.padding = px(2) 
+  ) |> 
+  tab_spanner(
+    columns = pos_1:pos_21,
+    label = 'Stem helix'
+  ) |> 
+  tab_spanner(
+    columns = pos_33:pos_80,
+    label = "HR2 region"
+  ) |> 
+  tab_spanner(
+    columns = pos_91:pos_95,
+    label = "TM region"
+  ) |> 
+  tab_style(
+    style = cell_borders(sides = 'left', weight = px(2)),
+    locations = cells_body(columns = pos_12)
+  ) |> 
+  tab_style(
+    style = cell_borders(sides = 'right', weight = px(2)),
+    locations = cells_body(columns = pos_19)
+  ) |> 
+  tab_style(
+    style = cell_borders(sides = c('top'),  weight = px(2)),
+    locations = cells_body(columns = pos_12:pos_19, rows = 1)
+  )|> 
+  tab_style(
+    style = cell_borders(sides = c('bottom'),  weight = px(2)),
+    locations = cells_body(columns = pos_12:pos_19, rows = nrow(gt_with_consensus$`_data`))
+  ) |> 
+  cols_label(
+    pos_14 ~ '*',
+    pos_15 ~ '',
+    pos_16 ~ '*',
+    pos_17 ~ '*'
+  )
+```
+
+# style 
