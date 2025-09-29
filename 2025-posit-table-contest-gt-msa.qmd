@@ -53,7 +53,7 @@ Data
 palette_aa <- readr::read_csv(here::here('data', 'palette_amino_acids.csv'))
 
 # msa data
-FILE_MSA <- 'msa.csv'
+FILE_MSA <- here::here('data', 'msa.csv')
 msa <- readr::read_csv(FILE_MSA)
 
 # long format
