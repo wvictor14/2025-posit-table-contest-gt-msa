@@ -4,29 +4,30 @@ date: 2025-10-03
 author: Victor Yuan
 format: 
   html:
-    theme: flatly
+    theme: pulse
     css: styles.css
     code-fold: true
     anchor-sections: true
     html-table-processing: none
-    toc: true
+    toc: false
     link-external-newwindow: true
-    other-links:
-      - text: Linkedin
-        icon: linkedin
-        href:  https://linkedin.com/in/victor2wy/
-      - text: Source Code
-        icon: github
-        href:  https://github.com/wvictor14/2025-posit-table-contest-gt-msa/blob/main/2025-posit-table-contest-gt-msa.qmd
-      - text: Website
-        icon: house-fill
-        href: https://victoryuan.com/
 bibliography: references.bib
 editor: 
   render-on-save: true
 editor_options: 
   chunk_output_type: console
 ---
+
+```{=html}
+<ul style="display: flex; list-style: none; padding: 0; gap: 20px; flex-wrap: wrap;">
+  <li><a href="https://linkedin.com/in/victor2wy/" target="_blank" rel="noopener"><i
+        class="bi bi-linkedin"></i>Linkedin</a></li>
+  <li><a
+      href="https://github.com/wvictor14/2025-posit-table-contest-gt-msa/blob/main/2025-posit-table-contest-gt-msa.qmd"
+      target="_blank" rel="noopener"><i class="bi bi-github"></i>Source Code</a></li>
+  <li><a href="https://victoryuan.com/" target="_blank" rel="noopener"><i class="bi bi-house-fill"></i>Website</a></li>
+</ul>
+```
 
 Multiple sequence alignment (MSA) is a computational technique to compare biological sequences, and identify regions of similarity and differences. This approach is used for identifying conserved functional domains, and understanding evolutionary relationships between related proteins.
 
@@ -352,7 +353,7 @@ This 95 amino acid long region centers around the epitope, which is where the an
 
 **MSA Color Palettes**
 
-MSAs commonly utilize colors to help readers better understand the variability in amino acid composition in biological sequences. Amino acids have all sorts of properties, such as hydrophobicity, size, and 3D structure.
+MSAs commonly utilize colors to help readers better understand the variability in amino acid composition in biological sequences. Amino acids have all sorts of properties, such as hydrophobicity, size, and 3D structure. By coloring amino acids according to their biochemical properties, we can better understand the  the variation in amino acid composition.
 
 This color palette is from [ggmsa](https://yulab-smu.top/ggmsa/) that groups chemically-similar amino acids together:
 
@@ -362,7 +363,7 @@ This color palette is from [ggmsa](https://yulab-smu.top/ggmsa/) that groups che
 - Polar amino acids asparagine (N), threonine (T), cysteine (C), glutamine (Q), and serine (S) are [green]{style="background-color: #74ce98;"}
 - Aromatic amino acids phenylalanine (F), tyrosine (Y), and tryptophan (W) are [yellow]{style="background-color: #ffff66;"}
 
-Different color palettes higlight properties amino acids differently. In this analysis, I implemented a several alternative palettes and explore how effective they can be used to understand the amino acid composition of protein sequences.
+In this analysis, I implemented a several alternative palettes and explore how effective they can be used to understand the amino acid composition of protein sequences.
 
 ## Core Epitope
 
@@ -375,11 +376,13 @@ base_table |>
   annotate_rectangle(start = pos_11, end = pos_18)
 ```
 
-At the end of the Stem Helix region lies the 28D9/1.6C7 (the very creative names of the antibodies) epitope region. This is where the magic happens. Referred to also as the "core epitope", asterisk are indicating where key amino acid positions are for binding. If these positions are replaced with other amino acids, the antibodies can no longer bind effectively. How did the researchers determine this? By, quite literally, systematically changing each amino acid one at a time and measuring antibody binding. This is known as a mutagensis experiment, and it importantly revealed that some amino acids can vary without affecting binding too much, but these 3 amino acids are critical.
+At the end of the Stem Helix lies the  **Epitope region**, which is a region where the antibodies 28D9/1.6C7 (the very creative names of the antibodies) bind to. This is where the magic happens. Referred to also as the "core epitope", asterisk indicate where key amino acid positions are for this interaction. If these positions are replaced with other amino acids, the antibodies can no longer bind effectively. 
 
-The exclamation point marks an adjacent amino acid which the authors refer to as a "conserved glycosylation sequon", or "NxS/T". This means this is an amino acid that sugar can attach to, and it follows the pattern of "the amino acid N, followed by any amino acid X, and then either an S or a T". Apparently this is a conserved pattern among coronavirus species. What's significant here is the authors suggest that this sugar molecule may be potentially important for the binding of these antibodies to this epitope.
+How did the researchers determine this? By quite literally systematically changing each amino acid one at a time and measuring antibody binding. This *mutagensis experiment* importantly revealed that some amino acids in this region can change without affecting binding too much, but these 3 amino acids are critical.
 
-## Stem helix
+The exclamation point marks an amino acid adjacent to the epitope, which the authors refer to as a "conserved glycosylation sequon", or "NxS/T". This means this is an amino acid that sugar can attach to, and it follows the pattern of "the amino acid N, followed by any amino acid X, and then either an S or a T". Apparently this is a conserved pattern among coronavirus species. What's significant here is the authors suggest that this sugar molecule may be potentially important for the binding of these antibodies to this epitope.
+
+## Stem Helix
 
 This type of domain forms a 3-dimensional spiral like structure
 
@@ -390,11 +393,10 @@ base_table |>
   annotate_rectangle(start = pos_1, end = pos_21)
 ```
 
-It's the orange part highlighted in this figure from the authors protein modeling figure.
+The **Stem Helix** is the orange part highlighted in this protein modeling figure.
 
 ![](img/stem_helix.png){height=4in}
-
-[Rasmol](https://openrasmol.org/doc/rasmol.html#shapelycolours) color palette which is based on Bob Fletterick's "Shapely Models"
+A color palette from the bioinformatic software [**Rasmol**](https://openrasmol.org/doc/rasmol.html#shapelycolours) is shown here, which is based on Bob Fletterick's "Shapely Models".
 
 ## HR2 region
 
@@ -407,13 +409,13 @@ base_table |>
   annotate_rectangle(start = pos_33, end = pos_80) 
 ```
 
-The epitope occurs upstream of the Heptad Repeat Region 2 (HR2). Why is it called "Heptad Repeat", because this is region where every 7 amino acids tends to be repeated. 
+The epitope occurs upstream of the **Heptad Repeat Region 2 (HR2)**. Why is it called "Heptad Repeat", because this is region where every 7 amino acids tends to be repeated. 
 
 Can you spot the pattern? (If you can, do let me know because I can't)
 
-## Viewing hydrophobocity
+## Hydrophobocity
 
-To help uncover hidden patterns in linear sequence
+We can adjust the palette to better identify the repeat pattern.
 
 ```{r}
 #| column: screen
@@ -424,7 +426,7 @@ base_table |>
 
 Heptad repeat regions are typically identified via 3D structural modelling. Meaning, the repetitive-ness of these regions are difficult to be observed when viewing linear amino acid sequences. The exact amino acid length of each repeat is also imperfect, and not necessarily is the same amino acid repeated, but just one that is highly similar - usually a hydrophobic amino acid (e.g. leucine, valine, phenylalanine). These typically occur at position 1 and 4 of each seven amino acid unit.
 
-We can try to see this pattern using a special lens - a color palette that highlights the relative hydrophobicity between amino acids.
+We can try to see this pattern using a color palette that highlights the relative hydrophobicity between amino acids.
 
 ## TM region
 
@@ -437,8 +439,10 @@ base_table |>
   annotate_rectangle(start = pos_91, end = pos_95)
 ```
 
-The final region is called the transmembrane (TM) region, which is the part of the protein that spans across a phospholipid bilayer. It is an important structural component that anchors the spike protein to the viral envelope. 
+The final region is called the **Transmembrane (TM) region**, which is the part of the protein that spans across a phospholipid bilayer. It is an important structural component that anchors the spike protein to the viral envelope. 
 
 Because of the lipid-rich environment of this layer, TM regions contain many hyrophobic and nonpolar residues - such as tryptophan (W), tyrosine (Y), valine (V), and leucine (L).
+
+This color palette `Taylor` is taken from the popular MSA program [Jalview](https://www.jalview.org/help/html/colourSchemes/index.html). 
 
 :::
