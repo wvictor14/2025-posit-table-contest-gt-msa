@@ -34,13 +34,15 @@ For the 2025 Posit Table contest I wanted to explore how MSAs can be effectively
 
 The data we are working with is an MSA from [@Wang2021], where they identified a potential universally conserved "weak spot" in Coronavirus spike proteins to specific cross-reactive monoclonal antibodies. The spike protein was the primary target for developing the COVID-19 vaccines, which crucially saved millions of lives during in the fight against the pandemic.
 
-[Figure 5](https://www.nature.com/articles/s41467-021-21968-w/figures/5) from their study presents an MSA comparing spike proteins from several coronavirus species: SARS-CoV, SARS-CoV-2, MERS-CoV, and HCoV-OC43 (which causes the common cold). I was struck by this visualization because of the apparent contradiction it revealed: despite there being large divergence between these species, the authors were able to identify a region with enough similarity to serve as target for broadly reactive antibodies.
+[Figure 5](https://www.nature.com/articles/s41467-021-21968-w/figures/5) from their study presents an MSA comparing spike proteins from several coronavirus species: SARS-CoV, SARS-CoV-2, MERS-CoV, and HCoV-OC43 (which causes the common cold). This visualization left an immediate impression on me. Despite there being large divergence between these species, the authors were able to identify a region with enough similarity to serve as target for broadly reactive antibodies.
 
-Let's explore how we can leverage `gt` with MSAs to better understand the evolutionary relationships between coronavirus protein sequences!
+Let's explore how we can leverage `gt` to better understand the evolutionary relationships between coronavirus protein sequences!
 
 # Setup {.hidden .unlisted .unnumbered}
 
-Libraries
+This section is to prepare for generating the visualizations. We keep this hidden in the output. 
+
+## Libraries
 
 ```{r}
 #| message: false
@@ -54,7 +56,7 @@ library(htmltools)
 library(glue)
 ```
 
-Data
+## Data
 
 ```{r}
 # palette
