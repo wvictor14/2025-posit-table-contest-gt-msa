@@ -16,6 +16,9 @@ editor:
   render-on-save: true
 editor_options: 
   chunk_output_type: console
+include-in-header:
+  - text: |
+      <link rel = "shortcut icon" href = "icon.svg" />
 ---
 
 ```{=html}
@@ -61,25 +64,25 @@ library(glue)
 
 ```{r}
 # palette
-palette_aa <- readr::read_csv(here::here('data', 'palette_amino_acids.csv'))
+palette_aa <- readr::read_csv(here::here("data", "palette_amino_acids.csv"))
 
 # msa data
-FILE_MSA <- here::here('data', 'msa.csv')
+FILE_MSA <- here::here("data", "msa.csv")
 msa <- readr::read_csv(FILE_MSA)
 
 # long format
-msa_long <- msa |>  
-  mutate(seq = as.character(seq) |> str_split('')) |> 
-  tidyr::unnest(seq) |> 
-  mutate(position = row_number(), .by = name) 
+msa_long <- msa |>
+  mutate(seq = as.character(seq) |> str_split("")) |>
+  tidyr::unnest(seq) |>
+  mutate(position = row_number(), .by = name)
 
 # table data
-tbl_data <- msa_long |> 
+tbl_data <- msa_long |>
   pivot_wider(
     id_cols = c(group, name, start),
-    names_from = 'position',
-    values_from = 'seq',
-    names_prefix = 'pos_'
+    names_from = "position",
+    values_from = "seq",
+    names_prefix = "pos_"
   )
 ```
 
@@ -90,21 +93,20 @@ tbl_data <- msa_long |>
 ```{r}
 #' returns a coloring function based on chosen palette
 apply_color_to_aa <- function(
-    letter, 
+    letter,
     palette = c(
-      'Chemistry', 
-      'Shapely', 
-      'Zappo', 
-      'Taylor', 
-      'LETTER',  
-      'Hydrophobicity'
-    )
-) {
-  target_palette <- palette_aa[,c('symbol', palette[1])] |> tibble::deframe()
-  
+      "Chemistry",
+      "Shapely",
+      "Zappo",
+      "Taylor",
+      "LETTER",
+      "Hydrophobicity"
+    )) {
+  target_palette <- palette_aa[, c("symbol", palette[1])] |> tibble::deframe()
+
   color_fn <- function(letter) {
     color <- target_palette[letter]
-    color[is.na(color)] <- 'grey'
+    color[is.na(color)] <- "grey"
     return(color)
   }
 }
@@ -119,44 +121,48 @@ apply_color_to_aa <- function(
 #' @param parent_div_width valid css unit for width of the parent div
 create_html_vertical_bar <- function(
     bar_height = .5,
-    bar_color = '#4a6fa5',
-    parent_div_height = '50px', 
-    parent_div_width = '100%'
-) {
-  .bar_height <- bar_height*100
+    bar_color = "#4a6fa5",
+    parent_div_height = "50px",
+    parent_div_width = "100%") {
+  .bar_height <- bar_height * 100
   div(
-    style=glue("width:{parent_div_width};height:{parent_div_height};margin:0;padding:0;"),
-    div(style=glue("height:{100-.bar_height}%;background:transparent;margin:0;padding:0;")),
-    div(style=glue("height:{.bar_height}%;background:{bar_color};margin:0;padding:0;"))
+    style = glue("width:{parent_div_width};height:{parent_div_height};margin:0;padding:0;"),
+    div(style = glue("height:{100-.bar_height}%;background:transparent;margin:0;padding:0;")),
+    div(style = glue("height:{.bar_height}%;background:{bar_color};margin:0;padding:0;"))
   )
 }
 
 #' Get conensus frequency
-#' 
+#'
 #' returns a 1-length named character vector of the most frequent amino acid, where:
 #'  - the value is the frequency
 #'  - the name is amino acid
-#'  
+#'
 #' Does not handle ties (one of the ties will be returned)
 #' @param x a vector, ideally of interesting biological sequences
 get_consensus <- function(x) {
-  
   # drop gaps
-  frequency_tbl <- x |> table() |>  sort(decreasing = TRUE)
-  consensus_freq <- (frequency_tbl/sum(frequency_tbl))[1]
-  
+  frequency_tbl <- x |>
+    table() |>
+    sort(decreasing = TRUE)
+  consensus_freq <- (frequency_tbl / sum(frequency_tbl))[1]
+
   return(consensus_freq)
 }
 
 #' gets the consensus of the vector x, and returns an html bar
 get_consensus_return_bar <- function(x) {
   consensus_freq <- get_consensus(x)
-  create_html_vertical_bar(consensus_freq) 
+  create_html_vertical_bar(consensus_freq)
 }
 
 # usage:
-c('X', 'X', 'O')|>  get_consensus_return_bar()  |> browsable()
-c('X', 'O')|>  get_consensus_return_bar()  |> browsable()
+c("X", "X", "O") |>
+  get_consensus_return_bar() |>
+  browsable()
+c("X", "O") |>
+  get_consensus_return_bar() |>
+  browsable()
 ```
 
 ### Breaks
@@ -165,18 +171,18 @@ c('X', 'O')|>  get_consensus_return_bar()  |> browsable()
 
 ```{r}
 #' Treats the column names as an axis, and generates breaks using `scales::breaks_width`
-#' 
-#' @return a vector of column names at every `width` position 
+#'
+#' @return a vector of column names at every `width` position
 generate_breaks <- function(tbl, width = 5) {
-  seq_cols <- tbl |> select(contains('pos'))
-  n_col <- seq_cols  |> ncol()
-  
+  seq_cols <- tbl |> select(contains("pos"))
+  n_col <- seq_cols |> ncol()
+
   breaks <- scales::breaks_width(width, 0)(c(1, n_col))
-  
+
   # handle case where breaks extend beyond data
   breaks <- intersect(breaks, 1:n_col)
-  
-  col_breaks <- colnames(seq_cols[,breaks])
+
+  col_breaks <- colnames(seq_cols[, breaks])
   return(col_breaks)
 }
 
@@ -191,33 +197,31 @@ This function is not well generalized.
 
 ```{r}
 #' Draws a rectangle around a section in a gt table
-#' 
+#'
 #' @param .gt_tbl a gt table
 #' @param start start column
 #' @param end end column
 annotate_rectangle <- function(.gt_tbl, start, end) {
-  
-  .gt_tbl |> 
+  .gt_tbl |>
     # add a rectangle to highlight region
     tab_style(
-      style = cell_borders(sides = 'left', weight = px(2)),
-      locations = cells_body(columns = {{start}})
-    ) |> 
+      style = cell_borders(sides = "left", weight = px(2)),
+      locations = cells_body(columns = {{ start }})
+    ) |>
     tab_style(
-      style = cell_borders(sides = 'right', weight = px(2)),
-      locations = cells_body(columns = {{end}})
-    ) |> 
+      style = cell_borders(sides = "right", weight = px(2)),
+      locations = cells_body(columns = {{ end }})
+    ) |>
     tab_style(
-      style = cell_borders(sides = c('top'),  weight = px(2)),
-      locations = cells_body(columns = {{start}}:{{end}}, rows = 1)
-    )|> 
-    
+      style = cell_borders(sides = c("top"), weight = px(2)),
+      locations = cells_body(columns = {{ start }}:{{ end }}, rows = 1)
+    ) |>
     # For the bottom border of the rectangle, need to target the top border of grand summary, if present
     # if grand summary is not present, need to target the bottom of the cells_body
     tab_style(
-      style = cell_borders(sides = c('top'),  weight = px(2), style = 'solid'),
-      locations = cells_grand_summary(columns = {{start}}:{{end}}, rows = 1)
-    ) 
+      style = cell_borders(sides = c("top"), weight = px(2), style = "solid"),
+      locations = cells_grand_summary(columns = {{ start }}:{{ end }}, rows = 1)
+    )
 }
 
 ```
@@ -234,119 +238,109 @@ This is my re-creation of the multiple sequence alignment of coronavirus spike p
 
 ```{r}
 #| column: screen
-base_table <- tbl_data |> 
-  gt(rowname_col = c('name'), groupname_col = 'group') |> 
-  
+base_table <- tbl_data |>
+  gt(rowname_col = c("name"), groupname_col = "group") |>
   # add consensus sequence
   grand_summary_rows(
-    columns = contains('pos'),
+    columns = contains("pos"),
     fns = list(
-      Consensus ~ get_consensus_return_bar(.) |> 
-        div(style = 'width:100%;height:50px;') |> 
+      Consensus ~ get_consensus_return_bar(.) |>
+        div(style = "width:100%;height:50px;") |>
         as.character(),
-      Sequence ~ names(get_consensus(.)) |> 
-        
+      Sequence ~ names(get_consensus(.)) |>
         # change to double dash, otherwise fmt_markdown turns it into a list (ul)
-        stringr::str_replace('-', '--')
+        stringr::str_replace("-", "--")
     ),
-    fmt =   list(
-      bar ~  fmt_markdown(.)
+    fmt = list(
+      bar ~ fmt_markdown(.)
     ),
-    missing = ''
-  ) |> 
-  
+    missing = ""
+  ) |>
   ## style consensus sequence
   ### make sure that the consensus sequence elements are centered
   tab_style(
-    style = cell_text(align = 'center'),
-    locations = cells_grand_summary(columns = contains('pos_'))
-  ) |> 
+    style = cell_text(align = "center"),
+    locations = cells_grand_summary(columns = contains("pos_"))
+  ) |>
   tab_style(
-    style = cell_borders(sides = 'bottom', style = 'hidden'),
+    style = cell_borders(sides = "bottom", style = "hidden"),
     locations = list(cells_grand_summary(rows = 1), cells_stub_grand_summary(rows = 1))
-  ) |> 
-  
+  ) |>
   # style the sequence elements: center elements, adjust size
   tab_style(
     style = cell_text(
       size = "small",
-      align = 'center',
+      align = "center",
       indent = 0
     ),
-    locations = list(cells_body(columns = contains('pos_')), cells_grand_summary(columns = contains('pos_')))
+    locations = list(cells_body(columns = contains("pos_")), cells_grand_summary(columns = contains("pos_")))
   ) |>
   cols_width(
     1 ~ px(60),
     name ~ px(50),
-    start ~ px(40), 
+    start ~ px(40),
     everything() ~ px(13)
-  ) |> 
-  cols_align( 'right', group:start) |> 
-  
+  ) |>
+  cols_align("right", group:start) |>
   # breaks
   cols_label_with(
-    fn = ~ifelse(. %in% breaks, ., '') |>  str_remove('pos_'), 
-    columns = contains('pos_')
-  ) |>  
-  
+    fn = ~ ifelse(. %in% breaks, ., "") |> str_remove("pos_"),
+    columns = contains("pos_")
+  ) |>
   # remove borders from the table body
   tab_style(
     style = list(
       cell_borders(
-        sides = 'all',
+        sides = "all",
         weight = px(0)
       )
     ),
     locations = list(
       cells_body()
     )
-  ) |> 
-  
+  ) |>
   # annotation regions in the alignment
   tab_spanner(
     columns = pos_1:pos_21,
-    label = 'Stem helix'
-  ) |> 
+    label = "Stem helix"
+  ) |>
   tab_spanner(
     columns = pos_33:pos_80,
     label = "HR2 region"
-  ) |> 
+  ) |>
   tab_spanner(
     columns = pos_91:pos_95,
     label = "TM region"
-  ) |> 
-  
+  ) |>
   # epitope
   cols_label(
-    pos_14 ~ '*',
-    pos_15 ~ '',
-    pos_16 ~ '*',
-    pos_17 ~ '*',
-    pos_19 ~ '!',
-  ) |> 
-  
+    pos_14 ~ "*",
+    pos_15 ~ "",
+    pos_16 ~ "*",
+    pos_17 ~ "*",
+    pos_19 ~ "!",
+  ) |>
   # borders, style
   tab_options(
-    
     row_group.as_column = TRUE,
     table.font.size = 14,
-    
+
     # adjust padding in the cell body
-    data_row.padding.horizontal = px(2), 
+    data_row.padding.horizontal = px(2),
     data_row.padding = px(2),
-    
+
     # adjust padding in the grand summary
     # Noting that padding creates space between the bars (which have 100% width)
-    grand_summary_row.padding.horizontal = px(0), 
+    grand_summary_row.padding.horizontal = px(0),
     grand_summary_row.padding = px(2),
-    
+
     # # remove borders
     table.border.top.style = "hidden",
     grand_summary_row.border.width = px(2)
-  )  
+  )
 
-base_table |> 
-  gt::data_color(columns = contains('pos_'), fn = apply_color_to_aa(palette = 'Chemistry'))
+base_table |>
+  gt::data_color(columns = contains("pos_"), fn = apply_color_to_aa(palette = "Chemistry"))
 ```
 
 This 95-amino-acid section contains several functionally important regions: the epitope where antibodies bind, the stem helix, heptad repeat region 2 (HR2), and the transmembrane domain (TM).
@@ -373,8 +367,8 @@ The region where the antibodies bind
 
 ```{r}
 #| column: screen
-base_table |> 
-  gt::data_color(columns = pos_11:pos_19, fn = apply_color_to_aa(palette = 'Chemistry')) |> 
+base_table |>
+  gt::data_color(columns = pos_11:pos_19, fn = apply_color_to_aa(palette = "Chemistry")) |>
   annotate_rectangle(start = pos_11, end = pos_18)
 ```
 
@@ -390,8 +384,8 @@ This type of domain forms a 3-dimensional spiral like structure
 
 ```{r}
 #| column: screen
-base_table |> 
-  gt::data_color(columns = pos_1:pos_21, fn = apply_color_to_aa(palette = 'Shapely')) |> 
+base_table |>
+  gt::data_color(columns = pos_1:pos_21, fn = apply_color_to_aa(palette = "Shapely")) |>
   annotate_rectangle(start = pos_1, end = pos_21)
 ```
 
@@ -406,9 +400,9 @@ HR2 stands for "Heptad Repeat Region 2"
 
 ```{r}
 #| column: screen
-base_table |> 
-  gt::data_color(columns = pos_33:pos_80, fn = apply_color_to_aa(palette = 'LETTER')) |> 
-  annotate_rectangle(start = pos_33, end = pos_80) 
+base_table |>
+  gt::data_color(columns = pos_33:pos_80, fn = apply_color_to_aa(palette = "LETTER")) |>
+  annotate_rectangle(start = pos_33, end = pos_80)
 ```
 
 The epitope occurs upstream of the **Heptad Repeat Region 2 (HR2)**. Why is it called "Heptad Repeat", because this is region where every 7 amino acids tends to be repeated. 
@@ -421,8 +415,8 @@ We can adjust the palette to better identify the repeat pattern.
 
 ```{r}
 #| column: screen
-base_table |> 
-  gt::data_color(columns = pos_33:pos_80, fn = apply_color_to_aa(palette = 'Hydrophobicity')) |> 
+base_table |>
+  gt::data_color(columns = pos_33:pos_80, fn = apply_color_to_aa(palette = "Hydrophobicity")) |>
   annotate_rectangle(start = pos_33, end = pos_80)
 ```
 
@@ -436,8 +430,8 @@ This region anchors the protein to the outer-most membrane of the virus.
 
 ```{r}
 #| column: screen
-base_table |> 
-  gt::data_color(columns = pos_91:pos_95, fn = apply_color_to_aa(palette = 'Taylor')) |> 
+base_table |>
+  gt::data_color(columns = pos_91:pos_95, fn = apply_color_to_aa(palette = "Taylor")) |>
   annotate_rectangle(start = pos_91, end = pos_95)
 ```
 
