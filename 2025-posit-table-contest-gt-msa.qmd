@@ -230,7 +230,7 @@ Click through the tabs below to explore each region of the coronavirus spike pro
 
 ## Spike Protein
 
-This is my re-creation of the msa figure of coronavirus spike proteins
+This is my re-creation of the multiple sequence alignment of coronavirus spike proteins
 
 ```{r}
 #| column: screen
@@ -349,9 +349,11 @@ base_table |>
   gt::data_color(columns = contains('pos_'), fn = apply_color_to_aa(palette = 'Chemistry'))
 ```
 
-This 95 amino acid long region centers around the epitope, which is where the antibodies bind to. Within this region, there are several conserved structural components: the stem helix, heptad repeat region 2 (HR2) and the transmembrane domain (TM). Click through the rest of these sections, as I use `gt` to help understand the amino acid composition of these regions in detail.
+This 95-amino-acid section contains several functionally important regions: the epitope where antibodies bind, the stem helix, heptad repeat region 2 (HR2), and the transmembrane domain (TM).
 
-**MSA Color Palettes**
+Click through the rest of these sections, as I use `gt` to help understand the amino acid composition of these regions in detail.
+
+**A note on the color palettes**
 
 MSAs commonly utilize colors to help readers better understand the variability in amino acid composition in biological sequences. Amino acids have all sorts of properties, such as hydrophobicity, size, and 3D structure. By coloring amino acids according to their biochemical properties, we can better understand the  the variation in amino acid composition.
 
@@ -430,7 +432,7 @@ We can try to see this pattern using a color palette that highlights the relativ
 
 ## TM region
 
-Anchoring the protein
+This region anchors the protein to the outer-most membrane of the virus.
 
 ```{r}
 #| column: screen
