@@ -91,10 +91,10 @@ tbl_data <- msa_long |>
 apply_color_to_aa <- function(
     letter, 
     palette = c(
-      'Chemistry_AA', 
-      'Shapely_AA', 
-      'Zappo_AA', 
-      'Taylor_AA', 
+      'Chemistry', 
+      'Shapely', 
+      'Zappo', 
+      'Taylor', 
       'LETTER',  
       'Hydrophobicity'
     )
@@ -371,7 +371,7 @@ Where antibodies bind
 ```{r}
 #| column: screen
 base_table |> 
-  gt::data_color(columns = pos_11:pos_19, fn = apply_color_to_aa(palette = 'Chemistry_AA')) |> 
+  gt::data_color(columns = pos_11:pos_19, fn = apply_color_to_aa(palette = 'Chemistry')) |> 
   annotate_rectangle(start = pos_11, end = pos_18)
 ```
 
@@ -385,13 +385,15 @@ The stem helix region refers to a part of the protein that forms a spiral like s
 ```{r}
 #| column: screen
 base_table |> 
-  gt::data_color(columns = pos_1:pos_21, fn = apply_color_to_aa(palette = 'Shapely_AA')) |> 
+  gt::data_color(columns = pos_1:pos_21, fn = apply_color_to_aa(palette = 'Shapely')) |> 
   annotate_rectangle(start = pos_1, end = pos_21)
 ```
 
 It's the orange part highlighted in this figure from the authors protein modeling figure.
 
 ![](img/stem_helix.png){height=4in}
+
+[Rasmol](https://openrasmol.org/doc/rasmol.html#shapelycolours) color palette which is based on Bob Fletterick's "Shapely Models"
 
 ## HR2 region
 
@@ -430,7 +432,7 @@ Anchoring the protein
 ```{r}
 #| column: screen
 base_table |> 
-  gt::data_color(columns = pos_91:pos_95, fn = apply_color_to_aa(palette = 'Taylor_AA')) |> 
+  gt::data_color(columns = pos_91:pos_95, fn = apply_color_to_aa(palette = 'Taylor')) |> 
   annotate_rectangle(start = pos_91, end = pos_95)
 ```
 
