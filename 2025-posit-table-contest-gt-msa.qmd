@@ -1,19 +1,27 @@
 ---
 title: "Multiple Sequence Alignments with r-gt!"
+date: 2025-10-03
+author: Victor Yuan
 format: 
   html:
+    theme: cosmo
+    css: styles.css
     code-fold: true
-    code-summary: "Show the code"
-    code-tools: true
     anchor-sections: true
     html-table-processing: none
+    toc: true
+    link-external-newwindow: true
     other-links:
-      - text: linkedin
+      - text: Linkedin
         icon: linkedin
         href:  https://linkedin.com/in/victor2wy/
       - text: Source Code
         icon: github
-        href:  https://github.com/wvictor14/2025-posit-table-contest-gt-msa/ 
+        href:  https://github.com/wvictor14/2025-posit-table-contest-gt-msa/blob/main/2025-posit-table-contest-gt-msa.qmd
+      - text: Website
+        icon: house-fill
+        href: https://victoryuan.com/
+bibliography: references.bib
 editor: 
   render-on-save: true
 editor_options: 
@@ -30,7 +38,7 @@ The data we are working with is an MSA from [@Wang2021], where they identified a
 
 Let's explore how we can leverage `gt` with MSAs to better understand the evolutionary relationships between coronavirus protein sequences!
 
-# Setup {.hidden}
+# Setup {.hidden .unlisted .unnumbered}
 
 Libraries
 

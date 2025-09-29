@@ -1,10 +1,4 @@
 project:
-  render: 
-   - "2025-posit-table-contest-gt-msa.qmd"
-
-bibliography: references.bib
-
-format:
-  html:
-    theme: cosmo
-    css: styles.css
+  type: default
+  render:
+    - 2025-posit-table-contest-gt-msa.qmd
