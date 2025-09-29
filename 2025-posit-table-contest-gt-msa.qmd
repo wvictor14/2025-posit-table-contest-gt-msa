@@ -345,7 +345,7 @@ base_table <- tbl_data |>
   )  
 
 base_table |> 
-  gt::data_color(columns = contains('pos_'), fn = apply_color_to_aa(palette = 'Chemistry_AA'))
+  gt::data_color(columns = contains('pos_'), fn = apply_color_to_aa(palette = 'Chemistry'))
 ```
 
 This 95 amino acid long region centers around the epitope, which is where the antibodies bind to. Within this region, there are several conserved structural components: the stem helix, heptad repeat region 2 (HR2) and the transmembrane domain (TM). Click through the rest of these sections, as I use `gt` to help understand the amino acid composition of these regions in detail.
@@ -354,7 +354,7 @@ This 95 amino acid long region centers around the epitope, which is where the an
 
 MSAs commonly utilize colors to help readers better understand the variability in amino acid composition in biological sequences. Amino acids have all sorts of properties, such as hydrophobicity, size, and 3D structure.
 
-This particular msa uses a color palette that groups chemically-similar amino acids together:
+This color palette is from [ggmsa](https://yulab-smu.top/ggmsa/) that groups chemically-similar amino acids together:
 
 - Acidic amino acids glutamic (E) and aspartic acid (D) are [red]{style="background-color: #ff6d6d;"}
 - Nonpolar/hydrophobic amino acids proline (P), alanine (A), valine (V), methionine (M), leucine (L), isoleucine (I), and glycine (G) are [orange]{style="background-color: #f2be3c;"}
