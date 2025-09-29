@@ -46,7 +46,6 @@ Thumbs.db # Windows specific
 # Cache directories
 .Rprofile.d/
 .renv/
-renv/
 /.quarto/
 **/*.quarto_ipynb
 _site
