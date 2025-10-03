@@ -3,7 +3,7 @@
 
 This submission to the 2025 table contest explores using the r package `gt` to explore the composition of coronavirus spike proteins. 
 
-[submission](https://victoryuan.com/2025-posit-table-contest-gt-msa/)
+[Table](https://victoryuan.com/2025-posit-table-contest-gt-msa/)
 
 ![](msa.gif)
 
