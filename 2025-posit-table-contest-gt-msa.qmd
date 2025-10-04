@@ -442,3 +442,5 @@ Because of the lipid-rich environment of this layer, TM regions contain many hyr
 This color palette `Taylor` is taken from the popular MSA program [Jalview](https://www.jalview.org/help/html/colourSchemes/index.html). 
 
 :::
+
+If you enjoyed this article and want to use some of these functions yourself, check out the development of [gtseq](https://github.com/wvictor14/gtseq)
